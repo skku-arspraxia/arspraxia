@@ -4,7 +4,7 @@ DATABASES = {
         'NAME': 'arspraxia',
         'USER': 'admin',
         'PASSWORD': 'admin1234',
-        'HOST': '3.34.177.129',
+        'HOST': '13.209.42.144',
         'PORT': '3306',
         }
     }
