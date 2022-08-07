@@ -28,8 +28,7 @@ SECRET_KEY = my_settings.SECRET_KEY
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '3.37.128.205', #django
-    '3.34.177.129', #djangoML
+    '13.125.213.245',
     '127.0.0.1'
 ]
 
