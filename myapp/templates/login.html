@@ -1,5 +1,5 @@
 {% load static %}
-{% include 'base.html' %}
+{% include 'header_inc.html' %}
     <head>
         <style>
             .gradient-custom {
@@ -31,16 +31,18 @@
 
                                     <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
                                     <p class="text-white-50 mb-5">Please enter your Id and Password!</p>
+                                    
+                                    <form action="login/" method="POST">
+                                        {% csrf_token %}
+                                        <div class="form-outline form-white mb-4">
+                                            <input type="text" id="id" name="id" class="form-control form-control-lg" />
+                                        </div>
 
-                                    <div class="form-outline form-white mb-4">
-                                        <input type="email" id="typeEmailX" class="form-control form-control-lg" />
-                                    </div>
-
-                                    <div class="form-outline form-white mb-4">
-                                        <input type="password" id="typePasswordX" class="form-control form-control-lg" />
-                                    </div>
-                                    <button class="btn btn-outline-light btn-lg px-5" type="submit">Login</button>
-
+                                        <div class="form-outline form-white mb-4">
+                                            <input type="password" id="pw" name="pw" class="form-control form-control-lg" />
+                                        </div>
+                                        <button class="btn btn-outline-light btn-lg px-5" type="submit">Login</button>
+                                    </form>  
                                 </div>
                             </div>
                         </div>

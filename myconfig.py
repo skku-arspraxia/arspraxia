@@ -6,7 +6,7 @@ ALLOWED_HOSTS = [
 DATABASES = {
     'default':{
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'arspraxia',
+        'NAME': 'arspraxia_test',
         'USER': 'admin',
         'PASSWORD': 'admin1234',
         'HOST': '13.209.42.144',
