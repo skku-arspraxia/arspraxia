@@ -15,6 +15,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = myconfig.ALLOWED_HOSTS
 
+SESSION_COOKIE_AGE = 7200
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Application definition
 

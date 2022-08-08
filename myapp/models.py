@@ -1,9 +1,11 @@
 from django.db import models
 
 # Create your models here.
-class Project(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=45)
+class Member(models.Model):
+    userid = models.CharField(max_length=20, db_column='userid')
+    userpw = models.CharField(max_length=20, db_column='userpw')
 
     class Meta:
-        db_table = 'project'
+        db_table = 'member'
+
+        
