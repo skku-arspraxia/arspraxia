@@ -2,7 +2,9 @@ from django.shortcuts import render
 from .models import Project
 from django.views.decorators.csrf import csrf_exempt
 
-# Create your views here.
+def login(request):
+        return render(request, 'login.html')
+
 
 def home(request):
         content = Project.objects.all()
