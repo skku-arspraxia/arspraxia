@@ -24,6 +24,7 @@ class SKKU_SENTIMENT:
 		
 		# Model
 		self.device = "cuda" if torch.cuda.is_available() else "cpu"
+		print("@@@1")
 		self.model = AutoModelForSequenceClassification.from_pretrained(self.args.pretrained_model, num_labels=self.args.num_labels).to(self.device)
 		self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 		
@@ -67,7 +68,8 @@ class SKKU_SENTIMENT:
 						y_batch[index] = 1
 				y_batch = tuple(y_batch)
 				y_batch = torch.tensor(y_batch)
-				y_batch = y_batch.type(torch.cuda.LongTensor)
+				y_batch = y_batch.type(torch.LongTensor)
+				print("@@@2")
 				y_batch = y_batch.to(self.device)
 				y_pred = self.model(input_ids_batch.to(self.device), attention_mask=attention_masks_batch.to(self.device))[0]
 				loss = F.cross_entropy(y_pred, y_batch)
