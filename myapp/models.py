@@ -1,4 +1,5 @@
 from django.db import models
+from django.db import modelss
 
 # Create your models here.
 class Member(models.Model):
@@ -7,5 +8,7 @@ class Member(models.Model):
 
     class Meta:
         db_table = 'member'
+        db_table = 'member'
+        """"""
 
         
