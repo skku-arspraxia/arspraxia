@@ -1,28 +1,52 @@
-<head>
-    <style>        
-        img.main_logo{
-            width: 100%;
-            height: 100%;
-        }
-    </style>
-</head>
-
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Navbar</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+{% load static %}
+    <body>
+        <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="/data/">Ars Praxia - ML Tool</a>
+            <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{% url 'about' %}">학습데이터 관리</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'about' %}">모델 관리</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+        </header>
+        <div class="container-fluid">
+            <div class="row">
+                <!-- 좌측 내비 -->
+                <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                    <div class="position-sticky pt-3 sidebar-sticky">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="/data/">
+                                    <span data-feather="file" class="align-text-bottom"></span>
+                                    학습 데이터
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/model/train/">
+                                    <span data-feather="layers" class="align-text-bottom"></span>
+                                    모델 학습
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/model/analyze/">
+                                    <span data-feather="bar-chart-2" class="align-text-bottom"></span>
+                                    모델 성능 분석
+                                </a>
+                            </li>
+                        </ul>      
+                    </div>
+                </nav>
+
+                <!-- 본문 -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary">개체명인식</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary">감성분석</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="alert alert-success" role="alert">
+                            <h4 class="alert-heading"></h4>
+                        </div>
+                    </div> 
+        

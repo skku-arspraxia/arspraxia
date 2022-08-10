@@ -7,16 +7,11 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 #from .models import Member
 
-def logincheck(request):
-        if request.session.session_key == None:
-                return True
-
-
 @csrf_exempt
 def login(request):
         if request.method == "GET":
                 if request.session.session_key != None:
-                        return redirect('/home/')     
+                        return redirect('/data/')     
 
         elif request.method == "POST":
                 try:
@@ -37,7 +32,7 @@ def login(request):
                         
                         if userid==formid and userpw==formpw:
                                 request.session['key'] = userid
-                                return redirect('/home/')      
+                                return redirect('/data/')      
                         
                 except:
                         connection.rollback()
@@ -45,11 +40,30 @@ def login(request):
         return render(request, 'login.html')
 
 
-def home(request):
+def data(request):
         if logincheck(request):
                 return redirect('/login/')
 
-        return render(request, 'home.html')
+        return render(request, 'data.html')
+
+
+def model_train(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        return render(request, 'model_train.html')
+
+
+def model_analyze(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        return render(request, 'model_analyze.html')
+
+
+def logincheck(request):
+        if request.session.session_key == None:
+                return True
 
 
 def about(request):

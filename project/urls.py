@@ -5,7 +5,9 @@ from myapp import views
 urlpatterns = [
     path('', views.login),
     path('login/', views.login),
-    path('home/', views.home),
+    path('data/', views.data),
+    path('model/train/', views.model_train),
+    path('model/analyze/', views.model_analyze),
     path('about/', views.about, name='about'),
     path('target/', views.target, name='target'),
 ]
