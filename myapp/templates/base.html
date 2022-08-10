@@ -1,11 +1,5 @@
-{% load static %}
 {% include 'header_inc.html' %}
 {% include 'header.html' %}
-
-        {% block mycontent %}
-        
-        {% endblock %}
-
-        <h1>공통 코드</h1>
-    </body>
-</html>
+{% block mycontent %}
+{% endblock %}
+{% include 'footer.html' %}

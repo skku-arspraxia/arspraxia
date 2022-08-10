@@ -1,0 +1,18 @@
+{% load static %}
+        </main>
+      </div>
+    </div>
+    <script src="{% static 'js/feather.min.js' %}" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script>
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    <script>
+
+        /* 네비 및 페이지 타이틀 설정 */
+        $(document).ready(function(){
+            $("h4.alert-heading").text($("input.pagetitle").val());
+            $(".nav-link").removeClass("active");
+            $("li.nav-item:nth-child("+$("input.pageno").val()+") .nav-link").addClass("active");
+        });
+        
+    </script>
+  </body>
+</html>
