@@ -107,6 +107,17 @@ def data(request):
         return render(request, 'data.html', context)
 
 
+def inference(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        context = {
+                "task" : request.GET["task"]
+        }
+
+        return render(request, 'inference.html', context)
+
+
 def model_train(request):
         if logincheck(request):
                 return redirect('/login/')
