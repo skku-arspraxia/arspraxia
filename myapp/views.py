@@ -107,7 +107,18 @@ def data(request):
         return render(request, 'data.html', context)
 
 
-def model_train(request):
+def inference(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        context = {
+                "task" : request.GET["task"]
+        }
+
+        return render(request, 'inference.html', context)
+
+
+def train(request):
         if logincheck(request):
                 return redirect('/login/')
 
@@ -125,12 +136,12 @@ def model_train(request):
                 "task" : request.GET["task"]
         }
 
-        return render(request, 'model_train.html', context)
+        return render(request, 'train.html', context)
         
 
 from .models import NLP_models
 # def model_analyze(request, model_type):
-def model_analyze(request):
+def models(request):
         if logincheck(request):
                 return redirect('/login/')
 
@@ -141,7 +152,7 @@ def model_analyze(request):
         }
         context['table_data'] = NLP_models.objects.filter(model_task=request.GET["task"])
 
-        return render(request, 'model_analyze.html', context)
+        return render(request, 'models.html', context)
 
 
 def logincheck(request):
