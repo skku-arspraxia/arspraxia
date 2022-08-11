@@ -20,16 +20,9 @@ def login(request):
 
         elif request.method == "POST":
                 try:
-                        cursor = connection.cursor()
-                        query = "SELECT * FROM member"
-                        result = cursor.execute(query)
-                        item = cursor.fetchall()
-                        connection.commit()
-                        connection.close()
-
-                        # DB
-                        userid = item[0][0]
-                        userpw = item[0][1]
+                        # config
+                        userid = project.settings.ADMIN_ACCESS_ID
+                        userpw = project.settings.ADMIN_ACCESS_PW
 
                         # FORM
                         formid = request.POST["id"]
