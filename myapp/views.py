@@ -139,14 +139,18 @@ def model_train(request):
         return render(request, 'model_train.html', context)
         
 
-
+from .models import NLP_models
+# def model_analyze(request, model_type):
 def model_analyze(request):
         if logincheck(request):
                 return redirect('/login/')
 
+        # print(model_type)
+
         context = {
                 "task" : request.GET["task"]
         }
+        context['table_data'] = NLP_models.objects.filter(model_task=request.GET["task"])
 
         return render(request, 'model_analyze.html', context)
 
