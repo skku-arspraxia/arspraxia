@@ -11,6 +11,16 @@
             $("h4.alert-heading").text($("input.pagetitle").val());
             $(".nav-link").removeClass("active");
             $("li.nav-item:nth-child("+$("input.pageno").val()+") .nav-link").addClass("active");
+
+            $(".taskbtn").click(function(){
+              if($(this).val() == "개체명인식"){
+                $("input.task").val("ner");
+              }
+              else if($(this).val() == "감성분석"){
+                $("input.task").val("sa");
+              }
+              $(".taskform").submit();
+            })
         });
         
     </script>

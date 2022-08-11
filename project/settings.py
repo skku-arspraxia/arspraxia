@@ -1,31 +1,14 @@
 from pathlib import Path
 import myconfig
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3BotoStorage'
-
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3BotoStorage'
 
 AWS_ACCESS_KEY_ID = myconfig.MY_AWS_ACCESS_KEY_ID
-
 AWS_SECRET_ACCESS_ID = myconfig.MY_AWS_SECRET_ACCESS_KEY
-
 AWS_STORAGE_BUCKET_NAME = 'arspraxiadata'
-
 AWS_REGION = 'ap-northeast-2'
-
 AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
     AWS_STORAGE_BUCKET_NAME, AWS_REGION
 )
-
-AWS_STATIC_LOCATION = 'static'
-STATICFILES_STORAGE = 'intranet_clone.asset_storage.StaticStorage'
-
-AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
-DEFAULT_FILE_STORAGE = 'intranet_clone.asset_storage.PublicMediaStorage'
-
-AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
-PRIVATE_FILE_STORAGE = 'intranet_clone.asset_storage.PrivateMediaStorage'
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

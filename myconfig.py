@@ -1,7 +1,7 @@
 ALLOWED_HOSTS = [
     '13.125.213.245',
-    '3.36.123.70',
-    '127.0.0.1'
+    '127.0.0.1',
+    '*'
 ]
 
 DATABASES = {
@@ -16,7 +16,7 @@ DATABASES = {
     }
 SECRET_KEY = 'django-insecure-qmas%(y3is4aw4m%9^r08sy^2y=$ffx$o27!-fun_253q(pk!w'
 
-MY_AWS_ACCESS_KEY_ID = ''
+MY_AWS_ACCESS_KEY_ID = 'AKIA5BIXHIUEXK4JLBXD'
 
-MY_AWS_SECRET_ACCESS_KEY = ''
+MY_AWS_SECRET_ACCESS_KEY = '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'
 
