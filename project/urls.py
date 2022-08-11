@@ -7,9 +7,7 @@ urlpatterns = [
     path('login/', views.login),
     path('data/', views.data),
     path('inference/', views.inference),
-    path('model/train/', views.model_train),
+    path('train/', views.train),
     # path('model/analyze/<model_type>', views.model_analyze, name='analyze'),
-    path('model/analyze/', views.model_analyze, name='analyze'),
-    path('about/', views.about, name='about'),
-    path('target/', views.target, name='target'),
+    path('models/', views.models, name='models'),
 ]
