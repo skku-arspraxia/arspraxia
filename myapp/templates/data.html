@@ -3,5 +3,18 @@
 {% block mycontent %}
     <input type="hidden" class="pagetitle" value="학습 데이터"/>
     <input type="hidden" class="pageno" value="1"/>
+    
+    <div class="col-md-12">
+        <label for="country" class="form-label">학습 데이터</label>
+        <select class="form-select hyperparam" id="country" required>
+            <option value="">학습 데이터를 선택해주세요</option>
+            {% for csv in csvlist %}
+              <option>{{ csv }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
 
+
+    <!--{{data|safe}}-->
 {% endblock %}
