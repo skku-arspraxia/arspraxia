@@ -4,6 +4,8 @@ import myconfig
 
 AWS_ACCESS_KEY_ID = myconfig.MY_AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_ID = myconfig.MY_AWS_SECRET_ACCESS_KEY
+ADMIN_ACCESS_ID = myconfig.ADMIN_ACCESS_ID
+ADMIN_ACCESS_PW = myconfig.ADMIN_ACCESS_PW
 AWS_STORAGE_BUCKET_NAME = 'arspraxiadata'
 AWS_REGION = 'ap-northeast-2'
 AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
