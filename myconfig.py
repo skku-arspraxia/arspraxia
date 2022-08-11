@@ -16,6 +16,8 @@ DATABASES = {
     }
 SECRET_KEY = 'django-insecure-qmas%(y3is4aw4m%9^r08sy^2y=$ffx$o27!-fun_253q(pk!w'
 
+MY_AWS_ACCESS_KEY_ID = 'AKIA5BIXHIUEXK4JLBXD'
+MY_AWS_SECRET_ACCESS_KEY = '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'
 ADMIN_ACCESS_ID = 'admin'
 ADMIN_ACCESS_PW = '1234'
 
