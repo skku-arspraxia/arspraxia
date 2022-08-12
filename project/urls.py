@@ -13,4 +13,5 @@ urlpatterns = [
 
     path('dataUpload/', views.dataUpload),
     path('dataSelectAjax/', views.dataSelectAjax),
+    path('modelPopup/',views.modelPopup),
 ]

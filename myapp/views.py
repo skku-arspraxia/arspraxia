@@ -203,3 +203,13 @@ def dataSelectAjax(request):
         context = {'data' : data}
         return JsonResponse(context)
 
+
+def modelPopup(request):
+        if request.method == 'GET':
+                id = request.GET['id']
+
+                context = {
+                        "index": id,
+                }
+
+                return render(request,'modelPopup.html',data)
