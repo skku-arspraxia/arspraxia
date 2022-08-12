@@ -1,4 +1,17 @@
 {% include 'header_inc.html' %}
 {% load static %}
-
-학습데이터 업로드 페이지
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>document</title>
+        <!--<script src="https://sdk.amazonaws.com/js/aws-sdk-2.809.0.min.js"></script>-->
+    </head>
+    <body>
+        <input id="files" type="file" accept="text/csv"/>
+        <button id="button">업로드</button>
+        <!--<script src="{% static 'js/putFile.js' %}"></script>
+        <script src="{% static 'js/index.js' %}"></script>-->
+    </body>
+</html>
