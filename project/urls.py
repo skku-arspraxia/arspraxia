@@ -10,6 +10,6 @@ urlpatterns = [
     path('train/', views.train),
     # path('model/analyze/<model_type>', views.model_analyze, name='analyze'),
     path('models/', views.models, name='models'),
-
+    path('modelPopup/',views.modelPopup),
     path('dataSelectAjax/', views.dataSelectAjax),
 ]

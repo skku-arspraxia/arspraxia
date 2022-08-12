@@ -166,6 +166,21 @@ def models(request):
         return render(request, 'models.html', context)
 
 
+def modelPopup(request):
+        if request.method == 'GET':
+                id = request.GET['id']
+
+                context = {
+                        "index": id,
+                }
+
+                return render(request,'modelPopup.html',data)
+
+
+
+
+
+
 def logincheck(request):
         if request.session.session_key == None:
                 return True
