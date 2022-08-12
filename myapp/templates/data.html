@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block mycontent %}
     <input type="hidden" class="pagetitle" value="학습 데이터"/>
@@ -21,7 +22,8 @@
     <script>
 
         function dataSelect(){
-            
+            $(".container").html("<img style='text-align:center;' src='{% static 'img/loading.gif' %}'/>");
+
             var param = {
                 'dataSrc' : $("#dataSrc option:checked").text()
             }
