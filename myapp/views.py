@@ -75,8 +75,7 @@ def data(request):
 
         context = {
                 "task" : request.GET["task"],
-                "csvlist" : csvlist,
-                "data" : data
+                "csvlist" : csvlist
         }
 
         return render(request, 'data.html', context)
@@ -165,10 +164,12 @@ def dataSelectAjax(request):
 
         df = pd.read_csv(datapath)        
         json_records = df.reset_index().to_json(orient='records')
-        data = []
         data = json.loads(json_records)
 
-        context = {'data' : data}
+        context = {
+                'data' : data
+        }
+
         return JsonResponse(context)
 
 
@@ -181,3 +182,5 @@ def modelPopup(request):
                 }
 
                 return render(request,'modelPopup.html',data)
+
+                
