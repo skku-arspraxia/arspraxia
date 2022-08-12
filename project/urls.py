@@ -11,5 +11,6 @@ urlpatterns = [
     # path('model/analyze/<model_type>', views.model_analyze, name='analyze'),
     path('models/', views.models, name='models'),
 
+    path('dataUpload/', views.dataUpload),
     path('dataSelectAjax/', views.dataSelectAjax),
 ]

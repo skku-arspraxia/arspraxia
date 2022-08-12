@@ -171,6 +171,17 @@ def logincheck(request):
                 return True
 
 
+def dataUpload(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        context = {
+                "task" : request.GET["task"]
+        }
+
+        return render(request, 'dataUpload.html', context)
+
+        
 def dataSelectAjax(request):
 
         s3r = boto3.resource(
