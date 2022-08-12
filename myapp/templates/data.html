@@ -1,16 +1,19 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block mycontent %}
+
     <input type="hidden" class="pagetitle" value="학습 데이터"/>
     <input type="hidden" class="pageno" value="1"/>
     
     <div class="col-md-12">
-        <label for="dataSrc" class="form-label">학습 데이터</label>
-        <select class="form-select hyperparam" id="dataSrc" required onchange="dataSelect();">
-            <option>학습 데이터를 선택해주세요</option>
+        <label for="dataSrc" class="form-label label-data">
+            학습 데이터 
+            <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=800;height=800');">[학습 데이터 업로드]</a>
+        </label>
+        <select class="form-select hyperparam" id="dataSrc" required onchange="dataSelect(this);">
+            <option value="0">학습 데이터를 선택해주세요</option>
             {% for csv in csvlist %}
-              <option>{{ csv }}</option>
+              <option value="{{forloop.counter}}">{{ csv }}</option>
             {% endfor %}
         </select>
     </div>
@@ -21,48 +24,64 @@
 
     <script>
 
-        function dataSelect(){
-            $(".container").html("<img style='text-align:center;' src='{% static 'img/loading.gif' %}'/>");
-
-            var param = {
-                'dataSrc' : $("#dataSrc option:checked").text()
+        function dataSelect(_this){
+            if($(_this).val() > 0){
+                $(".container").html("<img src='{% static 'img/loading.gif' %}'/>");
+                $(".hyperparam").attr("disabled", true);
+                var param = {
+                    'dataSrc' : $("#dataSrc option:checked").text()
+                }
+                $.ajax({
+                    url : "/dataSelectAjax/",
+                    type : "GET",
+                    data : param,
+                    dataType : "json",
+                    success : function(data) { 
+                        var appendHTML = ""
+                        appendHTML += "<table class='table table-light table-striped'>"
+                        appendHTML += " <thead>"
+                        appendHTML += "     <tr>"
+                        appendHTML += "         <th>No</th>"
+                        appendHTML += "         <th>Text</th>"
+                        appendHTML += "         <th>Sentiment</th>"
+                        appendHTML += "     </tr>"
+                        appendHTML += " </thead>"
+                        appendHTML += " <tbody>"
+                        appendHTML += "     {% if data %}"
+                        appendHTML += "     {% for i in data %}"
+                        appendHTML += "     <tr> "
+                        appendHTML += "         <td>{{forloop.counter}}</td>"
+                        appendHTML += "         <td>{{i.text}}</td>"
+                        appendHTML += "         <td>{{i.sentiment}}</td>"
+                        appendHTML += "     </tr>"
+                        appendHTML += "     {% endfor %}"
+                        appendHTML += "     {% endif %}"
+                        appendHTML += " </tbody>"
+                        appendHTML += "</table>"
+                        
+                        $(".container").html(appendHTML);
+                        $(".hyperparam").attr("disabled", false);
+                    }, 
+                    error : function(e) {
+                        console.log("error :" + e.response);
+                        $(".hyperparam").attr("disabled", false);
+                    }             
+                });
             }
-            $.ajax({
-                url : "/dataSelectAjax/",
-                type : "GET",
-                data : param,
-                dataType : "json",
-                success : function(data) { 
-                    var appendHTML = ""
-                    appendHTML += "<table class='table table-light table-striped'>"
-                    appendHTML += " <thead>"
-                    appendHTML += "     <tr>"
-                    appendHTML += "         <th>No</th>"
-                    appendHTML += "         <th>Text</th>"
-                    appendHTML += "         <th>Sentiment</th>"
-                    appendHTML += "     </tr>"
-                    appendHTML += " </thead>"
-                    appendHTML += " <tbody>"
-                    appendHTML += "     {% if data %}"
-                    appendHTML += "     {% for i in data %}"
-                    appendHTML += "     <tr> "
-                    appendHTML += "         <td>{{forloop.counter}}</td>"
-                    appendHTML += "         <td>{{i.text}}</td>"
-                    appendHTML += "         <td>{{i.sentiment}}</td>"
-                    appendHTML += "     </tr>"
-                    appendHTML += "     {% endfor %}"
-                    appendHTML += "     {% endif %}"
-                    appendHTML += " </tbody>"
-                    appendHTML += "</table>"
-                    
-                    $(".container").html(appendHTML);
-                }, 
-                error : function(e) {
-                    console.log("error :" + e.response);
-                }             
-            });
         }
 
     </script>
+
+    <style>
+        .label-data{
+            position: relative;
+            width: 100%;
+        }
+        .a-dataUpload{
+            position: absolute;
+            right: 0;
+            cursor:pointer;
+        }
+    </style>
 
 {% endblock %}

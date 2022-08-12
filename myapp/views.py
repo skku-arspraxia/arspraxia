@@ -166,26 +166,22 @@ def models(request):
         return render(request, 'models.html', context)
 
 
-def modelPopup(request):
-        if request.method == 'GET':
-                id = request.GET['id']
-
-                context = {
-                        "index": id,
-                }
-
-                return render(request,'modelPopup.html',data)
-
-
-
-
-
-
 def logincheck(request):
         if request.session.session_key == None:
                 return True
 
 
+def dataUpload(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        context = {
+                "task" : request.GET["task"]
+        }
+
+        return render(request, 'dataUpload.html', context)
+
+        
 def dataSelectAjax(request):
 
         s3r = boto3.resource(
@@ -207,3 +203,13 @@ def dataSelectAjax(request):
         context = {'data' : data}
         return JsonResponse(context)
 
+
+def modelPopup(request):
+        if request.method == 'GET':
+                id = request.GET['id']
+
+                context = {
+                        "index": id,
+                }
+
+                return render(request,'modelPopup.html',data)
