@@ -5,16 +5,62 @@
     <input type="hidden" class="pageno" value="1"/>
     
     <div class="col-md-12">
-        <label for="country" class="form-label">학습 데이터</label>
-        <select class="form-select hyperparam" id="country" required>
-            <option value="">학습 데이터를 선택해주세요</option>
+        <label for="dataSrc" class="form-label">학습 데이터</label>
+        <select class="form-select hyperparam" id="dataSrc" required onchange="dataSelect();">
+            <option>학습 데이터를 선택해주세요</option>
             {% for csv in csvlist %}
               <option>{{ csv }}</option>
             {% endfor %}
         </select>
     </div>
-    
 
+    <hr class="my-4">
 
-    <!--{{data|safe}}-->
+    <div class="container"></div>
+
+    <script>
+
+        function dataSelect(){
+            
+            var param = {
+                'dataSrc' : $("#dataSrc option:checked").text()
+            }
+            $.ajax({
+                url : "/dataSelectAjax/",
+                type : "GET",
+                data : param,
+                dataType : "json",
+                success : function(data) { 
+                    var appendHTML = ""
+                    appendHTML += "<table class='table table-light table-striped'>"
+                    appendHTML += " <thead>"
+                    appendHTML += "     <tr>"
+                    appendHTML += "         <th>No</th>"
+                    appendHTML += "         <th>Text</th>"
+                    appendHTML += "         <th>Sentiment</th>"
+                    appendHTML += "     </tr>"
+                    appendHTML += " </thead>"
+                    appendHTML += " <tbody>"
+                    appendHTML += "     {% if data %}"
+                    appendHTML += "     {% for i in data %}"
+                    appendHTML += "     <tr> "
+                    appendHTML += "         <td>{{forloop.counter}}</td>"
+                    appendHTML += "         <td>{{i.text}}</td>"
+                    appendHTML += "         <td>{{i.sentiment}}</td>"
+                    appendHTML += "     </tr>"
+                    appendHTML += "     {% endfor %}"
+                    appendHTML += "     {% endif %}"
+                    appendHTML += " </tbody>"
+                    appendHTML += "</table>"
+                    
+                    $(".container").html(appendHTML);
+                }, 
+                error : function(e) {
+                    console.log("error :" + e.response);
+                }             
+            });
+        }
+
+    </script>
+
 {% endblock %}

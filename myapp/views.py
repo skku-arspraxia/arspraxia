@@ -1,16 +1,20 @@
+import os
+import boto3
+import project.settings
+import pandas as pd
+import json
+
 from django.shortcuts import render, redirect
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 #from myapp.ml_sa import SKKU_SENTIMENT
 
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
-import os
-import boto3
-import project.settings
-import pandas as pd
+from .models import NLP_models
 
 @csrf_exempt
 def login(request):
@@ -63,6 +67,14 @@ def data(request):
                         if len(my_bucket_object.key.split('.')) > 1:
                                 csvlist.append(my_bucket_object.key)
 
+        
+        datapath = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/sa/raw/goo.csv'
+        df = pd.read_csv(datapath)
+        
+        json_records = df.reset_index().to_json(orient='records')
+        data = []
+        data = json.loads(json_records)
+
         """
         print("Bucket list")
         all_objects = s3c.list_objects(Bucket = 'arspraxiabucket')
@@ -101,7 +113,8 @@ def data(request):
 
         context = {
                 "task" : request.GET["task"],
-                "csvlist" : csvlist
+                "csvlist" : csvlist,
+                "data" : data
         }
 
         return render(request, 'data.html', context)
@@ -139,8 +152,6 @@ def train(request):
         return render(request, 'train.html', context)
         
 
-from .models import NLP_models
-# def model_analyze(request, model_type):
 def models(request):
         if logincheck(request):
                 return redirect('/login/')
@@ -160,12 +171,24 @@ def logincheck(request):
                 return True
 
 
-def about(request):
-        return render(request, 'about.html')
+def dataSelectAjax(request):
 
-@csrf_exempt
-def target(request):
-        #content = Project.objects.all()
-        return render(request, 'target.html',{
-         #       "content" : content
-        })
+        s3r = boto3.resource(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+
+        datapath = ''
+        datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
+        data_src = request.GET["dataSrc"]
+        datapath = datapath_url + data_src
+
+        df = pd.read_csv(datapath)        
+        json_records = df.reset_index().to_json(orient='records')
+        data = []
+        data = json.loads(json_records)
+
+        context = {'data' : data}
+        return JsonResponse(context)
+
