@@ -6,11 +6,10 @@ urlpatterns = [
     path('', views.login),
     path('login/', views.login),
     path('data/', views.data),
-    path('inference/', views.inference),
     path('train/', views.train),
-    # path('model/analyze/<model_type>', views.model_analyze, name='analyze'),
+    path('inference/', views.inference),
     path('models/', views.models, name='models'),
-
+    
     path('dataUpload/', views.dataUpload),
     path('dataSelectAjax/', views.dataSelectAjax),
     path('modelPopup/',views.modelPopup),

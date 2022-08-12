@@ -34,6 +34,15 @@
                             <option>KoBERT-lm</option>
                         </select>
                     </div>
+                    <div class="col-md-12">
+                        <label for="country" class="form-label">Data Set</label>
+                        <select class="form-select hyperparam" id="dataSrc" required onchange="dataSelect(this);">
+                            <option value="0">학습 데이터를 선택해주세요</option>
+                            {% for csv in csvlist %}
+                            <option value="{{forloop.counter}}">{{ csv }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
     
                 <hr class="my-4">
