@@ -20,7 +20,7 @@
 
     <hr class="my-4">
 
-    <div class="container"></div>
+    <div class="container" style="max-width: 100%;"></div>
 
     <script>
 
@@ -37,28 +37,26 @@
                     data : param,
                     dataType : "json",
                     success : function(data) { 
-                        var appendHTML = ""
-                        appendHTML += "<table class='table table-light table-striped'>"
-                        appendHTML += " <thead>"
-                        appendHTML += "     <tr>"
-                        appendHTML += "         <th>No</th>"
-                        appendHTML += "         <th>Text</th>"
-                        appendHTML += "         <th>Sentiment</th>"
-                        appendHTML += "     </tr>"
-                        appendHTML += " </thead>"
-                        appendHTML += " <tbody>"
-                        appendHTML += "     {% if data %}"
-                        appendHTML += "     {% for i in data %}"
-                        appendHTML += "     <tr> "
-                        appendHTML += "         <td>{{forloop.counter}}</td>"
-                        appendHTML += "         <td>{{i.text}}</td>"
-                        appendHTML += "         <td>{{i.sentiment}}</td>"
-                        appendHTML += "     </tr>"
-                        appendHTML += "     {% endfor %}"
-                        appendHTML += "     {% endif %}"
-                        appendHTML += " </tbody>"
-                        appendHTML += "</table>"
-                        
+                        var appendHTML = "";
+                        appendHTML += "<table class='table table-light table-striped'>";
+                        appendHTML += " <thead>";
+                        appendHTML += "     <tr>";
+                        appendHTML += "         <th>No</th>";
+                        appendHTML += "         <th>Text</th>";
+                        appendHTML += "         <th>Sentiment</th>";
+                        appendHTML += "     </tr>";
+                        appendHTML += " </thead>";
+                        appendHTML += " <tbody>";
+                        for(var i=0;i<data.data.length;i++){
+                            appendHTML += "     <tr> ";
+                            appendHTML += "         <td>"+(data.data[i].index+1)+"</td>";
+                            appendHTML += "         <td>"+data.data[i].text+"</td>";
+                            appendHTML += "         <td>"+data.data[i].sentiment+"</td>";
+                            appendHTML += "     </tr>";
+                        }
+                        appendHTML += " </tbody>";
+                        appendHTML += "</table>";
+
                         $(".container").html(appendHTML);
                         $(".hyperparam").attr("disabled", false);
                     }, 
@@ -81,6 +79,12 @@
             position: absolute;
             right: 0;
             cursor:pointer;
+        }
+        .container{
+            text-align: center;
+        }
+        .container table tr td:nth-child(2){
+            text-align: left;
         }
     </style>
 
