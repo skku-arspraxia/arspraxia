@@ -8,13 +8,9 @@ from django.shortcuts import render, redirect
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from .models import NLP_models
 
 #from myapp.ml_sa import SKKU_SENTIMENT
-
-from django.contrib.auth import login as auth_login
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-
-from .models import NLP_models
 
 @csrf_exempt
 def login(request):
@@ -67,40 +63,6 @@ def data(request):
                         if len(my_bucket_object.key.split('.')) > 1:
                                 csvlist.append(my_bucket_object.key)
 
-        
-        datapath = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/sa/raw/goo.csv'
-        df = pd.read_csv(datapath)
-        
-        json_records = df.reset_index().to_json(orient='records')
-        data = []
-        data = json.loads(json_records)
-
-        """
-        print("Bucket list")
-        all_objects = s3c.list_objects(Bucket = 'arspraxiabucket')
-        print(all_objects['Contents'])
-        print(len(all_objects['Contents']))
-        print("@@@@")
-
-        for obj in all_objects['Contents']:
-                print(obj['Key'])
-
-        """
-        #datapath = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/sa/raw/goo.csv'
-        #data = pd.read_csv(datapath).to_html(justify='center')
-        #data = pd.read_csv(datapath).to_dict()
-
-        #print(data_set)
-
-        #for object in data['text']:
-        #        print(object)
-
-        #for i, row in data.iterrows():
-        #        print(i, row)
-
-
-        
-
         """
         # 다운로드
         prefix = '/sa'
@@ -120,6 +82,35 @@ def data(request):
         return render(request, 'data.html', context)
 
 
+def train(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        s3r = boto3.resource(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+
+        csvlist = []
+        my_bucket = s3r.Bucket('arspraxiabucket')
+        for my_bucket_object in my_bucket.objects.all():
+                # Task 분류
+                if my_bucket_object.key.split('/')[0] == request.GET["task"]:
+                        # 파일 목록 출력
+                        if len(my_bucket_object.key.split('.')) > 1:
+                                csvlist.append(my_bucket_object.key)
+                                
+
+        context = {
+                "task" : request.GET["task"],
+                "csvlist" : csvlist
+        }
+        
+
+        return render(request, 'train.html', context)
+        
+
 def inference(request):
         if logincheck(request):
                 return redirect('/login/')
@@ -131,32 +122,9 @@ def inference(request):
         return render(request, 'inference.html', context)
 
 
-def train(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-
-        """
-        skku = SKKU_SENTIMENT()
-        content = {
-                'result' : skku("좋아요"),
-                'device' : skku.device,
-                'epochs' : skku.args.epochs
-        }
-        """
-
-        context = {
-                "task" : request.GET["task"]
-        }
-
-        return render(request, 'train.html', context)
-        
-
 def models(request):
         if logincheck(request):
                 return redirect('/login/')
-
-        # print(model_type)
 
         context = {
                 "task" : request.GET["task"]
