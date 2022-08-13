@@ -2,17 +2,34 @@
 {% load static %}
 
     <body>
+
+        <div id="my_modal">
+            <h6>파일을 선택해 주십시오</h6>
+            <button  class="modal_close_btn">닫기</button>
+        </div>
+
+
         <form id="fileForm" method="POST" onsubmit="return false;" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="hidden" id="task" name="task" value="{{task}}"/>
-            <input id="files" type="file" accept="text/csv"/>
-            <button id="button" onclick="fileUpload();">업로드</button>
+            <div class="frame">
+                <div class="center" >
+                        <div class="dropzone" >
+                                {% csrf_token %}
+                                <input type="hidden" id="task" name="task" value="{{task}}"/>
+                                <img src="{% static 'img/upload.png' %}" class="upload-icon" id = fileimg/>
+                                <input id="files" class="upload-input" type="file" name="filet" accept="text/csv"/>
+                        </div>
+        
+                        <button type="button" class="btn" name="uploadbutton" onclick="fileUpload();">Upload file</button>
+                </div>
+            </div>
         </form>
     </body>
     <script>
+
+
         function fileUpload(){
             if($("#files").get(0).files.length == 0){
-                alert("파일을 선택해주세요.");
+                modal('my_modal');
                 return;
             }
 
@@ -40,5 +57,172 @@
                 }
             });
         }
+
+
+        function modal(id) {
+                var zIndex = 9999;
+                var modal = document.getElementById(id);
+
+                // 모달 div 뒤에 희끄무레한 레이어
+                var bg = document.createElement('div');
+                bg.setStyle({
+                    position: 'fixed',
+                    zIndex: zIndex,
+                    left: '0px',
+                    top: '0px',
+                    width: '100%',
+                    height: '100%',
+                    overflow: 'auto',
+                    // 레이어 색갈은 여기서 바꾸면 됨
+                    backgroundColor: 'rgba(0,0,0,0.4)'
+                });
+                document.body.append(bg);
+
+                // 닫기 버튼 처리, 시꺼먼 레이어와 모달 div 지우기
+                modal.querySelector('.modal_close_btn').addEventListener('click', function() {
+                    bg.remove();
+                    modal.style.display = 'none';
+                });
+
+                modal.setStyle({
+                    position: 'fixed',
+                    display: 'block',
+                    boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
+
+                    // 시꺼먼 레이어 보다 한칸 위에 보이기
+                    zIndex: zIndex + 1,
+
+                    // div center 정렬
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    msTransform: 'translate(-50%, -50%)',
+                    webkitTransform: 'translate(-50%, -50%)'
+                });
+            }
+
+            Element.prototype.setStyle = function(styles) {
+                for (var k in styles) this.style[k] = styles[k];
+                return this;
+            };
+
+            
     </script>
+    <style>
+        html, body{
+            margin: 0;
+            padding: 0;
+        }
+        @import url(https://fonts.googleapis.com/css?family=Open+Sans:700,300);
+
+        .frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 400px;
+            height: 400px;
+            margin-top: -200px;
+            margin-left: -200px;
+            border-radius: 2px;
+            box-shadow: 4px 8px 16px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            background:  rgb(209, 230, 221) ;
+            color: #333;
+            font-family: "Open Sans", Helvetica, sans-serif;
+        }
+
+        .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 260px;
+            border-radius: 3px;
+            box-shadow: 8px 10px 15px 0 rgba(0, 0, 0, 0.2);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            flex-direction: column;
+        }
+
+        .title {
+            width: 100%;
+            height: 50px;
+            border-bottom: 1px solid #999;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 16px;
+            font-weight: 300;
+            color: #666;
+        }
+
+        .dropzone {
+            width: 200px;
+            height: 160px;
+            border: 1px dashed #999;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        .upload-icon {
+            margin-top: 65px;
+        }
+
+        .upload-input {
+            position: relative;
+            top: -62px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        .btn {
+            display: block;
+            width: 140px;
+            height: 40px;
+            background: rgb(255, 255, 255);
+            color: rgb(108, 117, 125);
+            border-radius: 3px;
+            border: 1;
+            border-color: rgb(108, 117, 125);
+            transition: all 0.2s ease-in-out;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: rgb(108, 117, 125);
+            color: rgb(255, 255, 255);
+        }
+
+        #my_modal {
+            display: none;
+            width: 300px;
+            padding: 20px 60px;
+            background-color: #fefefe;
+            border: 1px solid #888;
+            border-radius: 3px;
+        }
+
+        #my_modal .modal_close_btn {
+            position: absolute;
+            right: 2px;
+            bottom: 2px;
+            padding: 0;
+            border: 1px solid #888;
+            color: rgb(108, 117, 125);
+            background-color: rgb(255, 255, 255);
+            border-radius: 3px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        #my_modal .modal_close_btn:hover {
+            background: rgb(108, 117, 125);
+            color: rgb(255, 255, 255);
+        }
+    </style>
 </html>
