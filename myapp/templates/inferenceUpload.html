@@ -1,0 +1,44 @@
+{% include 'header_inc.html' %}
+{% load static %}
+
+    <body>
+        <form id="fileForm" method="POST" onsubmit="return false;" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="task" name="task" value="{{task}}"/>
+            <input id="files" type="file" accept="text/csv"/>
+            <button id="button" onclick="fileUpload();">업로드</button>
+        </form>
+    </body>
+    <script>
+        function fileUpload(){
+            if($("#files").get(0).files.length == 0){
+                alert("파일을 선택해주세요.");
+                return;
+            }
+
+            var form = $("#fileForm")[0];
+            var formData = new FormData(form);
+            formData.append("file", $("#files")[0].files[0]);
+            
+            $.ajaxSetup({
+                headers: { "X-CSRFToken": '{{csrf_token}}' }
+            });
+
+            $.ajax({
+                type : "POST",
+                enctype: 'multipart/form-data',
+                url : "/inferenceFileUploadAjax/",
+                data : formData,
+                processData : false,
+                contentType : false,
+                success : function(data){
+                    self.close();
+                    opener.location.reload();
+                },
+                error : function(data){
+                    alert("파일 업로드에 실패했습니다.");
+                }
+            });
+        }
+    </script>
+</html>
