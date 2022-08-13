@@ -12,6 +12,8 @@ urlpatterns = [
     path('train/', views.train),
     path('trainInsertAjax/', views.trainInsertAjax),
     path('inference/', views.inference),
+    path('inferenceUpload/', views.inferenceUpload),
+    path('inferenceFileUploadAjax/', views.inferenceFileUploadAjax),
     path('models/', views.models, name='models'),
     path('modelPopup/',views.modelPopup),
 ]

@@ -100,7 +100,7 @@ def dataFileUploadAjax(request):
         file = request.FILES['file']
         filename = file.name
         task = request.POST["task"]
-        fileuploadname = task + "/inf/" + filename
+        fileuploadname = task + "/train/" + filename
         s3c.upload_fileobj(
                 file,
                 'arspraxiabucket',
@@ -198,22 +198,80 @@ def inference(request):
         if logincheck(request):
                 return redirect('/login/')
 
+        s3r = boto3.resource(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+        
+        csvlist = []
+        my_bucket = s3r.Bucket('arspraxiabucket')
+        for my_bucket_object in my_bucket.objects.all():
+                task = my_bucket_object.key.split('/')[0]
+                if task == request.GET["task"]:
+                        if len(my_bucket_object.key.split('.')) > 1:
+                                filetype = my_bucket_object.key.split('.')[0].split("/")[1]
+                                if filetype == "inf":
+                                        if my_bucket_object.key.split('.')[1] == "csv":    
+                                                filename = my_bucket_object.key.split('.')[0].split("/")[2]                                            
+                                                csvlist.append(filename + ".csv")
+
         context = {
-                "task" : request.GET["task"]
+                "task" : request.GET["task"],
+                "csvlist" : csvlist,
+                "inference_model" : NLP_models.objects.filter(model_task=request.GET["task"])
         }
-        context['inference_model'] = NLP_models.objects.filter(model_task=request.GET["task"])
 
         return render(request, 'inference.html', context)
 
 
-def models(request):
+def inferenceUpload(request):
         if logincheck(request):
                 return redirect('/login/')
 
         context = {
                 "task" : request.GET["task"]
         }
-        context['table_data'] = NLP_models.objects.filter(model_task=request.GET["task"])
+
+        return render(request, 'inferenceUpload.html', context)
+
+
+@csrf_exempt
+def inferenceFileUploadAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        s3c = boto3.client(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+
+        file = request.FILES['file']
+        filename = file.name
+        task = request.POST["task"]
+        fileuploadname = task + "/inf/" + filename
+        s3c.upload_fileobj(
+                file,
+                'arspraxiabucket',
+                fileuploadname
+        )
+
+        context = {
+                "result" : "success"
+        }
+
+        return JsonResponse(context)
+
+        
+def models(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        context = {
+                "task" : request.GET["task"],
+                "table_data" : NLP_models.objects.filter(model_task=request.GET["task"])
+        }
 
         return render(request, 'models.html', context)
 

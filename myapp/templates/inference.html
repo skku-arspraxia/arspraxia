@@ -5,19 +5,50 @@
     <input type="hidden" class="pagetitle" value="추론"/>
     <input type="hidden" class="pageno" value="3"/>
 
-    <div class="col-md-12">
-        <label for="country" class="form-label">Inference Model</label>
-        <select class="form-select hyperparam" id="country" required>
-            <option value="">추론용 모델을 선택해주세요</option>
-            {% for model in inference_model %}
-                <option value="{{forloop.counter}}">{{ model.model_name }}</option>
-            {% endfor %}
-        </select>
+    <div class="row g-3">
+        <div class="col-md-12">
+            <label for="dataSrc" class="form-label label-data">
+                Data Set
+                <a class="a-dataUpload" onclick="window.open('/inferenceUpload/?task={{task}}','','width=800;height=800');">[추론 데이터 업로드]</a>
+            </label>
+            <select class="form-select hyperparam" id="dataSrc" onchange="dataSelect(this);">
+                <option hidden="" value="0">데이터를 선택해주세요</option>
+                {% if csvlist %}
+                    {% for csv in csvlist %}
+                        <option value="{{forloop.counter}}">{{ csv }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option disabled></option>
+                {% endif %}
+            </select>
+        </div>
+        
+        <div class="col-md-12">
+            <label for="infModel" class="form-label">Model</label>
+            <select class="form-select hyperparam" id="infModel">
+                <option hidden="" value="0">추론용 모델을 선택해주세요</option>
+                {% for model in inference_model %}
+                    <option value="{{forloop.counter}}">{{ model.model_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
 
 
     <hr class="my-4">
 
     <div class="container"></div>
+
+    <style>
+        .label-data{
+            position: relative;
+            width: 100%;
+        }
+        .a-dataUpload{
+            position: absolute;
+            right: 0;
+            cursor:pointer;
+        }
+    </style>
     
 {% endblock %}
