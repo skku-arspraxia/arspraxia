@@ -8,20 +8,20 @@
             <!--<form class="needs-validation" novalidate>-->
                 <div class="row g-3">
                     <div class="col-sm-6">
-                        <label for="firstName" class="form-label">Model Name</label>
-                        <input type="text" class="form-control hyperparam" id="firstName" placeholder="" value="" required>
+                        <label for="modelname" class="form-label">Model Name</label>
+                        <input type="text" class="form-control hyperparam" id="modelname" name="modelname" placeholder="" value="" required>
                     </div>
                     <div class="col-sm-6">
-                        <label for="firstName" class="form-label">Epoch</label>
-                        <input type="text" class="form-control hyperparam" id="firstName" placeholder="" value="" required>
+                        <label for="modelepoch" class="form-label">Epoch</label>
+                        <input type="text" class="form-control hyperparam" id="modelepoch" name="modelepoch" placeholder="" value="" required>
                     </div>
                     <div class="col-sm-6">
-                        <label for="firstName" class="form-label">Learning Rate</label>
-                        <input type="text" class="form-control hyperparam" id="firstName" placeholder="" value="" required>
+                        <label for="modellr" class="form-label">Learning Rate</label>
+                        <input type="text" class="form-control hyperparam" id="modellr" name="modellr" placeholder="" value="" required>
                     </div>
                     <div class="col-sm-6">
-                        <label for="firstName" class="form-label">Batch Size</label>
-                        <input type="text" class="form-control hyperparam" id="firstName" placeholder="" value="" required>
+                        <label for="modelbs" class="form-label">Batch Size</label>
+                        <input type="text" class="form-control hyperparam" id="modelbs" name="modelbs" placeholder="" value="" required>
                     </div>
                     <div class="col-md-12">
                         <label for="country" class="form-label">Pretrained Model</label>
@@ -43,11 +43,15 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="col-sm-12">
+                        <label for="modeldes" class="form-label">Description</label>
+                        <input type="text" class="form-control hyperparam" id="modeldes" name="modeldes" placeholder="" value="" required>
+                    </div>
                 </div>
     
                 <hr class="my-4">
 
-                <button class="w-100 btn btn-primary btn-lg trainstart" type="button">Start Training</button>
+                <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="insertResult();">Start Training</button>
                 <!--
                 결과 : {{skku.result}}
                 device : {{skku.device}}
@@ -64,14 +68,39 @@
             /* 네비 및 페이지 타이틀 설정 */
             $(document).ready(function(){
                 $(".trainstart").click(function(){
-                    $(".hyperparam, .trainstart").attr("disabled", true);
-                    $(this).text("Training....");
+                    //$(".hyperparam, .trainstart").attr("disabled", true);
+                    //$(this).text("Training....");
                 });
 
                 $(".col-lg-8").css("width","100%");
             });
+<!--            아래 부분 함수에 넣어야함 -->
+            function insertResult(){
+                var param = {
+                       "task" : '{{task}}',
+                       "modelname" : $("#modelname").val(),
+                       "modelepoch" : $("#modelepoch").val(),
+                       "modellr" : $("#modellr").val(),
+                       "modelbs" : $("#modelbs").val(),
+                       "modeldes" : $("#modeldes").val(),
+                };
 
+                console.log(param);
 
+                $.ajax({
+                    url : "/trainInsertAjax/",
+                    type : "GET",
+                    data : param,
+                    dataType : "json",
+                    success : function(data) {
+                        alert("Model saved successfully!");
+                    },
+                    error : function(e) {
+                        alert("Model save failed");
+                        console.log("error :" + e.response);
+                    }
+                });
+            }
         </script>
 
 {% endblock %}
