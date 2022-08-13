@@ -204,11 +204,30 @@ def dataSelectAjax(request):
 
 def modelPopup(request):
         if request.method == 'GET':
-                id = request.GET['id']
-
+                
+                model_input = NLP_models.objects.get(id=request.GET.get('id'))
+                print(model_input.model_name)
+                print(model_input.id)
                 context = {
-                        "index": id,
+                        "model_name":model_input.model_name,
+                        "model_id": model_input.id,
+                        "model_task": model_input.model_task,
+                        "epoch":model_input.epoch,
+                        "batch_size": model_input.batch_size,
+                        "learning_rate": model_input.learning_rate,
+                        "accuracy": model_input.accuracy,
+                        "f1":model_input.f1,
+                        "speed":model_input.speed,
+                        "volume":model_input.volume,
+                        "date":model_input.date,
+                        "desciption": model_input.description,
+                
                 }
 
-                return render(request,'modelPopup.html',data)
+                return render(request,'modelPopup.html',context)
+
+
+
+
+
 
