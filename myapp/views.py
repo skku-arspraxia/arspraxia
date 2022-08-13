@@ -6,9 +6,10 @@ import json
 import chardet
 
 from django.shortcuts import render, redirect
-from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db import connection
 from .models import NLP_models
 
 #from myapp.ml_sa import SKKU_SENTIMENT
@@ -267,19 +268,25 @@ def inferenceFileUploadAjax(request):
 
         return JsonResponse(context)
 
-        
+
 def models(request):
         if logincheck(request):
                 return redirect('/login/')
 
+        board_list = list(NLP_models.objects.filter(model_task=request.GET["task"]))
+        page = request.GET.get('page', '1')
+        paginator = Paginator(board_list, '10')
+        page_obj = paginator.page(page)
+
+
         context = {
                 "task" : request.GET["task"],
-                "table_data" : NLP_models.objects.filter(model_task=request.GET["task"])
+                "page_obj" : page_obj
         }
 
         return render(request, 'models.html', context)
 
-
+        
 def modelPopup(request):
         if request.method == 'GET':
                 
