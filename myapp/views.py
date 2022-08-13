@@ -201,6 +201,7 @@ def inference(request):
         context = {
                 "task" : request.GET["task"]
         }
+        context['inference_model'] = NLP_models.objects.filter(model_task=request.GET["task"])
 
         return render(request, 'inference.html', context)
 

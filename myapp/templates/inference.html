@@ -1,7 +1,23 @@
 {% extends 'base.html' %}
 
 {% block mycontent %}
+
     <input type="hidden" class="pagetitle" value="추론"/>
     <input type="hidden" class="pageno" value="3"/>
+
+    <div class="col-md-12">
+        <label for="country" class="form-label">Inference Model</label>
+        <select class="form-select hyperparam" id="country" required>
+            <option value="">추론용 모델을 선택해주세요</option>
+            {% for model in inference_model %}
+                <option value="{{forloop.counter}}">{{ model.model_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+
+    <hr class="my-4">
+
+    <div class="container"></div>
     
 {% endblock %}
