@@ -129,10 +129,13 @@ def dataSelectAjax(request):
         data_src = request.GET["dataSrc"]
         datapath = datapath_url + data_src
 
-        df = pd.read_csv(datapath)        
+        try:
+            df = pd.read_csv(datapath, encoding="utf-8") 
+        except:   
+            df = pd.read_csv(datapath, encoding="cp949")       
+     
         json_records = df.reset_index().to_json(orient='records')
         data = json.loads(json_records)
-
         context = {
                 'data' : data
         }
@@ -164,7 +167,8 @@ def train(request):
                                 
         context = {
                 "task" : request.GET["task"],
-                "csvlist" : csvlist
+                "csvlist" : csvlist,
+                "inference_model" : NLP_models.objects.filter(model_task=request.GET["task"])
         }        
 
         return render(request, 'train.html', context)

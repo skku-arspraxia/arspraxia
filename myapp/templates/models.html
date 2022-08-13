@@ -1,166 +1,38 @@
 {% extends 'base.html' %}
-
 {% block mycontent %}
+
     <input type="hidden" class="pagetitle" value="모델 성능 분석"/>
     <input type="hidden" class="pageno" value="4"/>
-    <div class="table-responsive">
-        <table class="table table-striped table-sm" style="text-align:center;">
-          <colgroup>
-            <col width="5%;"/>
-            <col width=""/>
-            <col width="10%;"/>
-            <col width="10%;"/>
-            <col width="20%;"/>
-            <col width="10%;"/>
-          </colgroup>
-          <thead>
-            <tr>
-              <th scope="col">번호</th>
-              <th scope="col">모델이름</th>
-              <th scope="col">용량</th>
-              <th scope="col">정확도</th>
-              <th scope="col">학습날짜</th>
-              <th scope="col">상세보기</th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for data in table_data %}
-          <tr>
-            <td>
-              {{ forloop.counter }}
-            </td>
-            <td>
-              {{ data.model_name }}
-            </td>
-            <td>
-              {{ data.volume }} MB
-            </td>
-            <td>
-              {{ data.accuracy }} % <!-- 백분율로 -->
-            </td>
-            <td>
-              {{ data.date |date:"Y-m-d" }}<!--날짜 년 월 일-->
-            </td>
-            <td>
-              <button onclick="window.open('/modelPopup/?id={{data.id}}','window_name','width=700,height=200');">btn</button>
-            </td>
-
-          </tr>
-          {% endfor %}
-<!--            <tr>-->
-<!--              <td>1,001</td>-->
-<!--              <td>random</td>-->
-<!--              <td>data</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>text</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,002</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>irrelevant</td>-->
-<!--              <td>visual</td>-->
-<!--              <td>layout</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,003</td>-->
-<!--              <td>data</td>-->
-<!--              <td>rich</td>-->
-<!--              <td>dashboard</td>-->
-<!--              <td>tabular</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,003</td>-->
-<!--              <td>information</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>illustrative</td>-->
-<!--              <td>data</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,004</td>-->
-<!--              <td>text</td>-->
-<!--              <td>random</td>-->
-<!--              <td>layout</td>-->
-<!--              <td>dashboard</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,005</td>-->
-<!--              <td>dashboard</td>-->
-<!--              <td>irrelevant</td>-->
-<!--              <td>text</td>-->
-<!--              <td>placeholder</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,006</td>-->
-<!--              <td>dashboard</td>-->
-<!--              <td>illustrative</td>-->
-<!--              <td>rich</td>-->
-<!--              <td>data</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,007</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>tabular</td>-->
-<!--              <td>information</td>-->
-<!--              <td>irrelevant</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,008</td>-->
-<!--              <td>random</td>-->
-<!--              <td>data</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>text</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,009</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>irrelevant</td>-->
-<!--              <td>visual</td>-->
-<!--              <td>layout</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,010</td>-->
-<!--              <td>data</td>-->
-<!--              <td>rich</td>-->
-<!--              <td>dashboard</td>-->
-<!--              <td>tabular</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,011</td>-->
-<!--              <td>information</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>illustrative</td>-->
-<!--              <td>data</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,012</td>-->
-<!--              <td>text</td>-->
-<!--              <td>placeholder</td>-->
-<!--              <td>layout</td>-->
-<!--              <td>dashboard</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,013</td>-->
-<!--              <td>dashboard</td>-->
-<!--              <td>irrelevant</td>-->
-<!--              <td>text</td>-->
-<!--              <td>visual</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,014</td>-->
-<!--              <td>dashboard</td>-->
-<!--              <td>illustrative</td>-->
-<!--              <td>rich</td>-->
-<!--              <td>data</td>-->
-<!--            </tr>-->
-<!--            <tr>-->
-<!--              <td>1,015</td>-->
-<!--              <td>random</td>-->
-<!--              <td>tabular</td>-->
-<!--              <td>information</td>-->
-<!--              <td>text</td>-->
-<!--            </tr>-->
-          </tbody>
-        </table>
-      </div>
+    
+    <div class="row g-3">
+        <div class="container">
+            <table class="table table-light table-striped" style="text-align:center;">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">번호</th>
+                        <th style="width:45%;">모델이름</th>
+                        <th style="width:10%;">용량</th>
+                        <th style="width:10%;">정확도</th>
+                        <th style="width:20%;">학습날짜</th>
+                        <th style="width:10%;">상세보기</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in table_data %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ data.model_name }}</td>
+                            <td>{{ data.volume }} MB</td>
+                            <td>{{ data.accuracy }} %</td>
+                            <td>{{ data.date | date:"Y년 m월 d일" }}</td>
+                            <td>
+                                <button onclick="window.open('/modelPopup/?id={{data.id}}','window_name','width=700,height=500');">보기</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 {% endblock %}

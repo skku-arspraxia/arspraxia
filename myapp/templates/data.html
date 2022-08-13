@@ -7,23 +7,24 @@
     
     <div class="row g-3">
         <div class="col-md-12">
-            <label for="dataSrc" class="form-label label-data">
+            <label class="form-label label-data" for="dataSrc">
                 Data Set
-                <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=800;height=800');">[학습 데이터 업로드]</a>
+                <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=400,height=400');">[데이터 업로드]</a>
             </label>
-            <select class="form-select hyperparam" id="dataSrc" onchange="dataSelect(this);">
-                <option hidden="" value="0">데이터를 선택해주세요</option>
-                {% if csvlist %}
-                    {% for csv in csvlist %}
-                        <option value="{{forloop.counter}}">{{ csv }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option disabled></option>
-                {% endif %}
-            </select>
+            {% if csvlist %}
+                <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
+                    <option hidden="" value="0">데이터를 선택해주세요</option>
+                        {% for csv in csvlist %}
+                            <option value="{{forloop.counter}}">{{ csv }}</option>
+                        {% endfor %}    
+                </select>            
+            {% else %}
+                <select id="dataSrc" class="form-select hyperparam" disabled> 
+                    <option hidden="" value="0">데이터가 없습니다</option>
+                </select>
+            {% endif %}
         </div>
     </div>
-
     <hr class="my-4">
 
     <div class="container"></div>
@@ -70,8 +71,9 @@
                         $(".container").html(appendHTML);
                     }, 
                     error : function(e) {
-                        console.log("error :" + e.response);
+                        modalShow("데이터 불러오기에 실패했습니다.");
                         $(".container").html("");
+                        console.log("error :" + e.response);
                     },
                     complete : function(){
                         $(".hyperparam").attr("disabled", false);      

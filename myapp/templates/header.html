@@ -1,7 +1,8 @@
 {% load static %}
+
     <body>
         <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="/data/">Ars Praxia - ML Tool</a>
+            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="/data/?task=ner">Ars Praxia - ML Tool</a>
             <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -13,47 +14,42 @@
                     <div class="position-sticky pt-3 sidebar-sticky">
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" href="/data/?task=ner">
-                                    <span data-feather="file" class="align-text-bottom"></span>
+                                <a class="nav-link" href="/data/?task=ner">
+                                    <span data-feather="folder" class="align-text-bottom"></span>
                                     Data
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="/train/?task=ner">
-                                    <span data-feather="layers" class="align-text-bottom"></span>
+                                    <span data-feather="book-open" class="align-text-bottom"></span>
                                     Train
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="/inference/?task=ner">
-                                    <span data-feather="file" class="align-text-bottom"></span>
+                                    <span data-feather="bar-chart-2" class="align-text-bottom"></span>
                                     Inference
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="/models/?task=ner">
-                                    <span data-feather="bar-chart-2" class="align-text-bottom"></span>
+                                    <span data-feather="database" class="align-text-bottom"></span>
                                     Models
                                 </a>
                             </li>
                         </ul>      
                     </div>
                 </nav>
+
                 <!-- 본문 상단 -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <div class="btn-toolbar mb-2 mb-md-0">
-
                             <div class="btn-group me-2">
                                 <form action="." method="GET" class="taskform">
+                                    <input type="button" class="btn btn-sm btn-outline-secondary taskbtn" value="개체명인식" data-task="ner" />
+                                    <input type="button" class="btn btn-sm btn-outline-secondary taskbtn" value="감성분석" data-task="sa"/>
                                     <input type="hidden" id="task" name="task" class="task" value="{{task}}"/>
-                                    {% if task == 'ner' %}
-                                        <input type="button" class="btn btn-sm btn-outline-secondary taskbtn active" value="개체명인식"/>
-                                        <input type="button" class="btn btn-sm btn-outline-secondary taskbtn" value="감성분석"/>
-                                    {% else %}
-                                        <input type="button" class="btn btn-sm btn-outline-secondary taskbtn" value="개체명인식"/>
-                                        <input type="button" class="btn btn-sm btn-outline-secondary taskbtn active" value="감성분석"/>
-                                    {% endif %} 
                                 </form>
                             </div>
                         </div>
@@ -62,5 +58,20 @@
                         <div class="alert alert-success" role="alert">
                             <h4 class="alert-heading"></h4>
                         </div>
-                    </div> 
+                    </div>
+
+                    <!-- Modal -->
+                    <div class="modal" id="msg_popup" tabindex="-1" role="dialog">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">알림</h5>
+                                </div>
+                                <div class="modal-body"></div>
+                                <div class="modal-footer" id="btn_alert">
+                                    <button type="button" id="alert_ok" class="btn btn-primary" data-dismiss="modal" onclick="modalHide();">닫기</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
         

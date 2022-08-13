@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% block mycontent %}
 
     <input type="hidden" class="pagetitle" value="추론"/>
@@ -9,33 +8,42 @@
         <div class="col-md-12">
             <label for="dataSrc" class="form-label label-data">
                 Data Set
-                <a class="a-dataUpload" onclick="window.open('/inferenceUpload/?task={{task}}','','width=800;height=800');">[추론 데이터 업로드]</a>
+                <a class="a-dataUpload" onclick="window.open('/inferenceUpload/?task={{task}}','','width=800;height=800');">[데이터 업로드]</a>
             </label>
-            <select class="form-select hyperparam" id="dataSrc" onchange="dataSelect(this);">
-                <option hidden="" value="0">데이터를 선택해주세요</option>
-                {% if csvlist %}
-                    {% for csv in csvlist %}
-                        <option value="{{forloop.counter}}">{{ csv }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option disabled></option>
-                {% endif %}
-            </select>
+            {% if csvlist %}
+                <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
+                    <option hidden="" value="0">데이터를 선택해주세요</option>
+                        {% for csv in csvlist %}
+                            <option value="{{forloop.counter}}">{{ csv }}</option>
+                        {% endfor %}    
+                </select>            
+            {% else %}
+                <select id="dataSrc" class="form-select hyperparam" disabled> 
+                    <option hidden="" value="0">데이터가 없습니다</option>
+                </select>
+            {% endif %}
         </div>
         
         <div class="col-md-12">
-            <label for="infModel" class="form-label">Model</label>
-            <select class="form-select hyperparam" id="infModel">
-                <option hidden="" value="0">추론용 모델을 선택해주세요</option>
-                {% for model in inference_model %}
-                    <option value="{{forloop.counter}}">{{ model.model_name }}</option>
-                {% endfor %}
-            </select>
+            <label for="infModel" class="form-label">Model</label>            
+            {% if inference_model %}
+                <select id="infModel" class="form-select hyperparam">
+                    <option hidden="" value="0">모델을 선택해주세요</option>
+                    {% for model in inference_model %}
+                        <option value="{{forloop.counter}}">{{ model.model_name }}</option>
+                    {% endfor %}
+                </select>    
+            {% else %}
+                <select id="infModel" class="form-select hyperparam" disabled> 
+                    <option hidden="" value="0">저장된 모델이 없습니다</option>
+                </select>
+            {% endif %}
         </div>
     </div>
 
-
     <hr class="my-4">
+
+    <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="">Start Inference</button>
 
     <div class="container"></div>
 
