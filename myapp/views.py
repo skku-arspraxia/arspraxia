@@ -232,7 +232,7 @@ def modelPopup(request):
                         "speed":model_input.speed,
                         "volume":model_input.volume,
                         "date":model_input.date,
-                        "desciption": model_input.description,
+                        "description": model_input.description,
                 
                 }
 
@@ -243,3 +243,30 @@ def modelPopup(request):
 
 
 
+def trainInsertAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        #data_src = request.GET["dataSrc"]
+
+        trainInsertAjax = NLP_models()
+
+        trainInsertAjax.model_task = request.GET["task"]
+        trainInsertAjax.model_name = request.GET["modelname"]
+        trainInsertAjax.epoch = request.GET["modelepoch"]
+        trainInsertAjax.learning_rate = request.GET["modellr"]
+        trainInsertAjax.batch_size = request.GET["modelbs"]
+        trainInsertAjax.description = request.GET["modeldes"]
+        trainInsertAjax.accuracy = 0.91 #이후 수정
+        trainInsertAjax.f1 = 0.92 #이후 수정
+        trainInsertAjax.speed = 23.1 #이후 수정
+        trainInsertAjax.volume = 48.4 #이후 수정
+
+
+        trainInsertAjax.save()
+
+        context = {
+                'result' : 'success'
+        }
+
+        return JsonResponse(context)
