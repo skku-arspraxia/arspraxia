@@ -54,14 +54,25 @@ def data(request):
                 aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
         )
 
-        csvlist = []
+        csvlist_train = []
+        csvlist_inf = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
-                # Task 분류
-                if my_bucket_object.key.split('/')[0] == request.GET["task"]:
-                        # 파일 목록 출력
+                task = my_bucket_object.key.split('/')[0]
+
+                if task == request.GET["task"]:
                         if len(my_bucket_object.key.split('.')) > 1:
-                                csvlist.append(my_bucket_object.key)
+                                # 파일 목록 출력
+                                if my_bucket_object.key.split('.')[1] == "csv":
+                                        filetype = my_bucket_object.key.split('.')[0].split("/")[1]
+                                        filename = my_bucket_object.key.split('.')[0].split("/")[2]
+                                        
+                                        if filetype == "train":
+                                                csvlist_train.append(filename + ".csv")
+                                        elif filetype == "inf":
+                                                csvlist_inf.append(filename + ".csv")
+
+
 
         """
         # 다운로드
@@ -75,7 +86,8 @@ def data(request):
 
         context = {
                 "task" : request.GET["task"],
-                "csvlist" : csvlist
+                "csvlist_train" : csvlist_train,
+                "csvlist_inf" : csvlist_inf
         }
 
         return render(request, 'data.html', context)

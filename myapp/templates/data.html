@@ -2,20 +2,42 @@
 {% load static %}
 {% block mycontent %}
 
-    <input type="hidden" class="pagetitle" value="학습 데이터"/>
+    <input type="hidden" class="pagetitle" value="데이터 관리"/>
     <input type="hidden" class="pageno" value="1"/>
     
-    <div class="col-md-12">
-        <label for="dataSrc" class="form-label label-data">
-            학습 데이터 
-            <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=800;height=800');">[학습 데이터 업로드]</a>
-        </label>
-        <select class="form-select hyperparam" id="dataSrc" required onchange="dataSelect(this);">
-            <option value="0">학습 데이터를 선택해주세요</option>
-            {% for csv in csvlist %}
-              <option value="{{forloop.counter}}">{{ csv }}</option>
-            {% endfor %}
-        </select>
+    <div class="row g-3">
+        <div class="col-md-12">
+            <label for="trainingdataSrc" class="form-label label-data">
+                Training Data Set
+                <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=800;height=800');">[학습 데이터 업로드]</a>
+            </label>
+            <select class="form-select hyperparam" id="trainingdataSrc" required onchange="dataSelect(this, 'train');">
+                <option hidden="" value="0">Please select a data</option>
+                {% if csvlist_train %}
+                    {% for csv in csvlist_train %}
+                        <option value="{{forloop.counter}}">{{ csv }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option disabled></option>
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="col-md-12">
+            <label for="inferencedataSrc" class="form-label label-data">
+                Inference Data Set
+            </label>
+            <select class="form-select hyperparam" id="inferencedataSrc" required onchange="dataSelect(this, 'inf');">
+                <option hidden="" value="0">Please select a data</option>
+                {% if csvlist_inf %}
+                    {% for csv in csvlist_inf %}
+                        <option value="{{forloop.counter}}">{{ csv }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option disabled></option>
+                {% endif %}
+            </select>
+        </div>
     </div>
 
     <hr class="my-4">
@@ -24,13 +46,26 @@
 
     <script>
 
-        function dataSelect(_this){
+        function dataSelect(_this, dataType){
             if($(_this).val() > 0){
                 $(".container").html("<img src='{% static 'img/loading.gif' %}'/>");
                 $(".hyperparam").attr("disabled", true);
-                var param = {
-                    'dataSrc' : $("#dataSrc option:checked").text()
+
+                var task = '{{task}}';
+                var dataName = "";                   
+                if(dataType == "train"){
+                    dataName = $("#trainingdataSrc option:selected").text();
+                    $("#inferencedataSrc option:eq(0)").prop("selected", true);
                 }
+                else if(dataType == "inf"){
+                    dataName = $("#inferencedataSrc option:selected").text();
+                    $("#trainingdataSrc option:eq(0)").prop("selected", true);
+                }             
+                
+                var param = {
+                    'dataSrc' : task + "/" + dataType + "/" + dataName
+                };
+
                 $.ajax({
                     url : "/dataSelectAjax/",
                     type : "GET",
@@ -58,12 +93,14 @@
                         appendHTML += "</table>";
 
                         $(".container").html(appendHTML);
-                        $(".hyperparam").attr("disabled", false);
                     }, 
                     error : function(e) {
                         console.log("error :" + e.response);
-                        $(".hyperparam").attr("disabled", false);
-                    }             
+                        $(".container").html("");
+                    },
+                    complete : function(){
+                        $(".hyperparam").attr("disabled", false);      
+                    }
                 });
             }
         }
