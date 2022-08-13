@@ -39,7 +39,7 @@
               {{ data.accuracy }} % <!-- 백분율로 -->
             </td>
             <td>
-              {{ data.date }}<!--날짜 년 월 일-->
+              {{ data.date |date:"Y-m-d" }}<!--날짜 년 월 일-->
             </td>
             <td>
               <button onclick="window.open('/modelPopup/?id={{data.id}}','window_name','width=700,height=200');">btn</button>
