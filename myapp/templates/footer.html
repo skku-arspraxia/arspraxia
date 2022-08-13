@@ -1,4 +1,5 @@
 {% load static %}
+
         </main>
       </div>
     </div>
@@ -6,23 +7,36 @@
     <script src="{% static 'js/dashboard.js' %}"></script>
     <script>
 
-        /* 네비 및 페이지 타이틀 설정 */
         $(document).ready(function(){
-            $("h4.alert-heading").text($("input.pagetitle").val());
+
+            // 좌측 네비 스타일
             $(".nav-link").removeClass("active");
             $("li.nav-item:nth-child("+$("input.pageno").val()+") .nav-link").addClass("active");
 
+            // 페이지 상단 타이틀
+            $("h4.alert-heading").text($("input.pagetitle").val());
+
+            // Task 버튼
+            $(".taskbtn[data-task="+$("input.task").val()+"]").addClass("active");
             $(".taskbtn").click(function(){
-              if($(this).val() == "개체명인식"){
-                $("input.task").val("ner");
-              }
-              else if($(this).val() == "감성분석"){
-                $("input.task").val("sa");
-              }
-              $(".taskform").submit();
-            })
+                if(!$(this).hasClass("active")){
+                  var task = $(this).data("task");
+                  $("input.task").val(task);
+                  $(".taskform").submit();
+                }
+            });
+
         });
 
+        function modalShow(msg){
+          $(".modal-body").html(msg);
+          $("#msg_popup").modal("show");
+        }
+
+        function modalHide(){
+          $("#msg_popup").modal("hide");
+        }
+        
     </script>
   </body>
 </html>
