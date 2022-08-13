@@ -104,8 +104,7 @@ def train(request):
         context = {
                 "task" : request.GET["task"],
                 "csvlist" : csvlist
-        }
-        
+        }        
 
         return render(request, 'train.html', context)
         
@@ -148,8 +147,38 @@ def dataUpload(request):
 
         return render(request, 'dataUpload.html', context)
 
+
+@csrf_exempt
+def dataFileUploadAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        s3c = boto3.client(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+
+        file = request.FILES['file']
+        filename = file.name
+        task = request.POST["task"]
+        fileuploadname = task + "/inf/" + filename
+        s3c.upload_fileobj(
+                file,
+                'arspraxiabucket',
+                fileuploadname
+        )
+
+        context = {
+                "result" : "success"
+        }
+
+        return JsonResponse(context)
+
         
 def dataSelectAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
 
         s3r = boto3.resource(
                 's3',
@@ -183,4 +212,3 @@ def modelPopup(request):
 
                 return render(request,'modelPopup.html',data)
 
-                
