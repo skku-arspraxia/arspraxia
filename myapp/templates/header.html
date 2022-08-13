@@ -39,14 +39,14 @@
                         </ul>      
                     </div>
                 </nav>
-                <!-- 본문 -->
+                <!-- 본문 상단 -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <div class="btn-toolbar mb-2 mb-md-0">
 
                             <div class="btn-group me-2">
                                 <form action="." method="GET" class="taskform">
-                                    <input type="hidden" id="task" name="task" class="task" value=""/>
+                                    <input type="hidden" id="task" name="task" class="task" value="{{task}}"/>
                                     {% if task == 'ner' %}
                                         <input type="button" class="btn btn-sm btn-outline-secondary taskbtn active" value="개체명인식"/>
                                         <input type="button" class="btn btn-sm btn-outline-secondary taskbtn" value="감성분석"/>

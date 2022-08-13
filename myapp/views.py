@@ -3,6 +3,7 @@ import boto3
 import project.settings
 import pandas as pd
 import json
+import chardet
 
 from django.shortcuts import render, redirect
 from django.db import connection
@@ -57,21 +58,14 @@ def data(request):
         csvlist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
-                # Task 분류
-                if my_bucket_object.key.split('/')[0] == request.GET["task"]:
-                        # 파일 목록 출력
+                task = my_bucket_object.key.split('/')[0]
+                if task == request.GET["task"]:
                         if len(my_bucket_object.key.split('.')) > 1:
-                                csvlist.append(my_bucket_object.key)
-
-        """
-        # 다운로드
-        prefix = '/sa'
-        for object in bucket.objects.filter(Prefix = '/sa'):
-                if object.key == prefix:
-                        os.makedirs(os.path.dirname(object.key), exist_ok=True)
-                        continue;
-                bucket.download_file(object.key, object.key)
-        """
+                                filetype = my_bucket_object.key.split('.')[0].split("/")[1]
+                                if filetype == "train":
+                                        if my_bucket_object.key.split('.')[1] == "csv":    
+                                                filename = my_bucket_object.key.split('.')[0].split("/")[2]                                            
+                                                csvlist.append(filename + ".csv")
 
         context = {
                 "task" : request.GET["task"],
@@ -79,62 +73,6 @@ def data(request):
         }
 
         return render(request, 'data.html', context)
-
-
-def train(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-        s3r = boto3.resource(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
-
-        csvlist = []
-        my_bucket = s3r.Bucket('arspraxiabucket')
-        for my_bucket_object in my_bucket.objects.all():
-                # Task 분류
-                if my_bucket_object.key.split('/')[0] == request.GET["task"]:
-                        # 파일 목록 출력
-                        if len(my_bucket_object.key.split('.')) > 1:
-                                csvlist.append(my_bucket_object.key)
-                                
-
-        context = {
-                "task" : request.GET["task"],
-                "csvlist" : csvlist
-        }        
-
-        return render(request, 'train.html', context)
-        
-
-def inference(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-        context = {
-                "task" : request.GET["task"]
-        }
-
-        return render(request, 'inference.html', context)
-
-
-def models(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-        context = {
-                "task" : request.GET["task"]
-        }
-        context['table_data'] = NLP_models.objects.filter(model_task=request.GET["task"])
-
-        return render(request, 'models.html', context)
-
-
-def logincheck(request):
-        if request.session.session_key == None:
-                return True
 
 
 def dataUpload(request):
@@ -202,6 +140,83 @@ def dataSelectAjax(request):
         return JsonResponse(context)
 
 
+def train(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        s3r = boto3.resource(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+
+        csvlist = []
+        my_bucket = s3r.Bucket('arspraxiabucket')
+        for my_bucket_object in my_bucket.objects.all():
+                task = my_bucket_object.key.split('/')[0]
+                if task == request.GET["task"]:
+                        if len(my_bucket_object.key.split('.')) > 1:
+                                filetype = my_bucket_object.key.split('.')[0].split("/")[1]
+                                if filetype == "train":
+                                        if my_bucket_object.key.split('.')[1] == "csv":    
+                                                filename = my_bucket_object.key.split('.')[0].split("/")[2]                                            
+                                                csvlist.append(filename + ".csv")
+                                
+        context = {
+                "task" : request.GET["task"],
+                "csvlist" : csvlist
+        }        
+
+        return render(request, 'train.html', context)
+        
+
+def trainInsertAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        trainInsertAjax = NLP_models()
+        trainInsertAjax.model_task = request.GET["task"]
+        trainInsertAjax.model_name = request.GET["modelname"]
+        trainInsertAjax.epoch = request.GET["modelepoch"]
+        trainInsertAjax.learning_rate = request.GET["modellr"]
+        trainInsertAjax.batch_size = request.GET["modelbs"]
+        trainInsertAjax.description = request.GET["modeldes"]
+        trainInsertAjax.accuracy = request.GET["modelacc"]
+        trainInsertAjax.f1 = request.GET["modelf1"]
+        trainInsertAjax.speed = request.GET["modelspeed"]
+        trainInsertAjax.volume = request.GET["modelvolume"]
+        trainInsertAjax.save()
+
+        context = {
+                'result' : 'success'
+        }
+
+        return JsonResponse(context)
+
+
+def inference(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        context = {
+                "task" : request.GET["task"]
+        }
+
+        return render(request, 'inference.html', context)
+
+
+def models(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        context = {
+                "task" : request.GET["task"]
+        }
+        context['table_data'] = NLP_models.objects.filter(model_task=request.GET["task"])
+
+        return render(request, 'models.html', context)
+
+
 def modelPopup(request):
         if request.method == 'GET':
                 
@@ -227,34 +242,18 @@ def modelPopup(request):
                 return render(request,'modelPopup.html',context)
 
 
+def logincheck(request):
+        if request.session.session_key == None:
+                return True
 
 
 
-
-def trainInsertAjax(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-        #data_src = request.GET["dataSrc"]
-
-        trainInsertAjax = NLP_models()
-
-        trainInsertAjax.model_task = request.GET["task"]
-        trainInsertAjax.model_name = request.GET["modelname"]
-        trainInsertAjax.epoch = request.GET["modelepoch"]
-        trainInsertAjax.learning_rate = request.GET["modellr"]
-        trainInsertAjax.batch_size = request.GET["modelbs"]
-        trainInsertAjax.description = request.GET["modeldes"]
-        trainInsertAjax.accuracy = 0.91 #이후 수정
-        trainInsertAjax.f1 = 0.92 #이후 수정
-        trainInsertAjax.speed = 23.1 #이후 수정
-        trainInsertAjax.volume = 48.4 #이후 수정
-
-
-        trainInsertAjax.save()
-
-        context = {
-                'result' : 'success'
-        }
-
-        return JsonResponse(context)
+"""
+# 다운로드
+prefix = '/sa'
+for object in bucket.objects.filter(Prefix = '/sa'):
+        if object.key == prefix:
+                os.makedirs(os.path.dirname(object.key), exist_ok=True)
+                continue;
+        bucket.download_file(object.key, object.key)
+"""

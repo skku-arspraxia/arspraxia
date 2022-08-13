@@ -5,66 +5,66 @@
     <input type="hidden" class="pageno" value="2"/>
 
         <div class="col-md-7 col-lg-8">
-            <!--<form class="needs-validation" novalidate>-->
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <label for="modelname" class="form-label">Model Name</label>
-                        <input type="text" class="form-control hyperparam" id="modelname" name="modelname" placeholder="" value="" required>
-                    </div>
-                    <div class="col-sm-6">
-                        <label for="modelepoch" class="form-label">Epoch</label>
-                        <input type="text" class="form-control hyperparam" id="modelepoch" name="modelepoch" placeholder="" value="" required>
-                    </div>
-                    <div class="col-sm-6">
-                        <label for="modellr" class="form-label">Learning Rate</label>
-                        <input type="text" class="form-control hyperparam" id="modellr" name="modellr" placeholder="" value="" required>
-                    </div>
-                    <div class="col-sm-6">
-                        <label for="modelbs" class="form-label">Batch Size</label>
-                        <input type="text" class="form-control hyperparam" id="modelbs" name="modelbs" placeholder="" value="" required>
-                    </div>
-                    <div class="col-md-12">
-                        <label for="country" class="form-label">Pretrained Model</label>
-                        <select class="form-select hyperparam" id="country" required>
-                            <option value="">사전 학습 모델을 선택해주세요</option>
-                            <option>KoELECTRA-base-v3-discriminator</option>
-                            <option>KoELECTRA-small-v3-discriminator</option>
-                            <option>KoBERT</option>
-                            <option>DistilKoBERT</option>
-                            <option>KoBERT-lm</option>
-                        </select>
-                    </div>
-                    <div class="col-md-12">
-                        <label for="country" class="form-label">Data Set</label>
-                        <select class="form-select hyperparam" id="dataSrc" required onchange="dataSelect(this);">
-                            <option value="0">학습 데이터를 선택해주세요</option>
-                            {% for csv in csvlist %}
-                            <option value="{{forloop.counter}}">{{ csv }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-sm-12">
-                        <label for="modeldes" class="form-label">Description</label>
-                        <input type="text" class="form-control hyperparam" id="modeldes" name="modeldes" placeholder="" value="" required>
-                    </div>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label for="modelname" class="form-label">Model Name</label>
+                    <input type="text" class="form-control hyperparam" id="modelname" name="modelname" placeholder="모델 이름을 입력해주세요" maxlength="45" value="" />
                 </div>
-    
-                <hr class="my-4">
+                <div class="col-sm-6">
+                    <label for="modelepoch" class="form-label">Epoch</label>
+                    <input type="number" class="form-control hyperparam" id="modelepoch" name="modelepoch" placeholder="에포크 값을 설정해주세요" value="" />
+                </div>
+                <div class="col-sm-6">
+                    <label for="modellr" class="form-label">Learning Rate</label>
+                    <input type="number" class="form-control hyperparam" id="modellr" name="modellr" placeholder="학습률 값을 설정해주세요" value="" />
+                </div>
+                <div class="col-sm-6">
+                    <label for="modelbs" class="form-label">Batch Size</label>
+                    <input type="number" class="form-control hyperparam" id="modelbs" name="modelbs" placeholder="배치사이즈 값을 설정해주세요" value="" />
+                </div>
+                <div class="col-md-12">
+                    <label for="pretrained" class="form-label">Pretrained Model</label>
+                    <select class="form-select hyperparam" id="pretrained">
+                        <option hidden="" value="0">사전 학습 모델을 선택해주세요</option>
+                        <option value="1">KoELECTRA-base-v3-discriminator</option>
+                        <option value="2">KoELECTRA-small-v3-discriminator</option>
+                        <option value="3">KoBERT</option>
+                        <option value="4">DistilKoBERT</option>
+                        <option value="5">KoBERT-lm</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <label for="dataSrc" class="form-label">Data Set</label>
+                    <select class="form-select hyperparam" id="dataSrc" onchange="dataSelect(this);">
+                        <option hidden="" value="0">학습 데이터를 선택해주세요</option>
+                        {% for csv in csvlist %}
+                        <option value="{{forloop.counter}}">{{ csv }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-12">
+                    <label for="modeldes" class="form-label">Description</label>
+                    <input type="text" class="form-control hyperparam" id="modeldes" name="modeldes" placeholder="추가 설명을 입력해주세요" maxlength="200" value="" />
+                </div>
+            </div>
 
-                <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="insertResult();">Start Training</button>
-                <!--
-                결과 : {{skku.result}}
-                device : {{skku.device}}
-                에포크 : {{skku.epochs}}
-                -->
-            <!--</form>-->
+            <hr class="my-4">
+
+            <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="insertResult();">Start Training</button>
+
+
+            <input type="hidden" class="form-control hyperparam" id="modelacc" name="modelacc" value="0.91"/>
+            <input type="hidden" class="form-control hyperparam" id="modelf1" name="modelf1" value="0.92"/>
+            <input type="hidden" class="form-control hyperparam" id="modelspeed" name="modelspeed" value="23.1"/>
+            <input type="hidden" class="form-control hyperparam" id="modelvolume" name="modelvolume" value="48.4"/>
+            <!--
+            결과 : {{skku.result}}
+            device : {{skku.device}}
+            에포크 : {{skku.epochs}}
+            -->
         </div>
 
-
-
         <script>
-
-
             /* 네비 및 페이지 타이틀 설정 */
             $(document).ready(function(){
                 $(".trainstart").click(function(){
@@ -74,18 +74,45 @@
 
                 $(".col-lg-8").css("width","100%");
             });
-<!--            아래 부분 함수에 넣어야함 -->
+
             function insertResult(){
+                if($("#modelname").val() == ""){
+                    alert("모델이름 입력");
+                    return;
+                }
+                else if($("#modelepoch").val() == ""){
+                    alert("에포크 입력");
+                    return;
+                }
+                else if($("#modellr").val() == ""){
+                    alert("학습률 입력");
+                    return;
+                }
+                else if($("#modelbs").val() == ""){
+                    alert("배치사이즈 입력");
+                    return;
+                }
+                else if($("#pretrained option:selected").val() == "0"){
+                    alert("사전학습모델 선택");
+                    return;
+                }
+                else if($("#dataSrc option:selected").val() == "0"){
+                    alert("데이터 선택");
+                    return;
+                }
+
                 var param = {
-                       "task" : '{{task}}',
+                       "task" : $("#task").val(),
                        "modelname" : $("#modelname").val(),
                        "modelepoch" : $("#modelepoch").val(),
                        "modellr" : $("#modellr").val(),
                        "modelbs" : $("#modelbs").val(),
                        "modeldes" : $("#modeldes").val(),
+                       "modelacc" : $("#modelacc").val(),
+                       "modelf1" : $("#modelf1").val(),
+                       "modelspeed" : $("#modelspeed").val(),
+                       "modelvolume" : $("#modelvolume").val()
                 };
-
-                console.log(param);
 
                 $.ajax({
                     url : "/trainInsertAjax/",
