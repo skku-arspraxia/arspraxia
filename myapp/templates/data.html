@@ -7,30 +7,14 @@
     
     <div class="row g-3">
         <div class="col-md-12">
-            <label for="trainingdataSrc" class="form-label label-data">
-                Training Data Set
+            <label for="dataSrc" class="form-label label-data">
+                Data Set
                 <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=800;height=800');">[학습 데이터 업로드]</a>
             </label>
-            <select class="form-select hyperparam" id="trainingdataSrc" required onchange="dataSelect(this, 'train');">
-                <option hidden="" value="0">Please select a data</option>
-                {% if csvlist_train %}
-                    {% for csv in csvlist_train %}
-                        <option value="{{forloop.counter}}">{{ csv }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option disabled></option>
-                {% endif %}
-            </select>
-        </div>
-
-        <div class="col-md-12">
-            <label for="inferencedataSrc" class="form-label label-data">
-                Inference Data Set
-            </label>
-            <select class="form-select hyperparam" id="inferencedataSrc" required onchange="dataSelect(this, 'inf');">
-                <option hidden="" value="0">Please select a data</option>
-                {% if csvlist_inf %}
-                    {% for csv in csvlist_inf %}
+            <select class="form-select hyperparam" id="dataSrc" onchange="dataSelect(this);">
+                <option hidden="" value="0">데이터를 선택해주세요</option>
+                {% if csvlist %}
+                    {% for csv in csvlist %}
                         <option value="{{forloop.counter}}">{{ csv }}</option>
                     {% endfor %}
                 {% else %}
@@ -51,19 +35,10 @@
                 $(".container").html("<img src='{% static 'img/loading.gif' %}'/>");
                 $(".hyperparam").attr("disabled", true);
 
-                var task = '{{task}}';
-                var dataName = "";                   
-                if(dataType == "train"){
-                    dataName = $("#trainingdataSrc option:selected").text();
-                    $("#inferencedataSrc option:eq(0)").prop("selected", true);
-                }
-                else if(dataType == "inf"){
-                    dataName = $("#inferencedataSrc option:selected").text();
-                    $("#trainingdataSrc option:eq(0)").prop("selected", true);
-                }             
-                
+                var task = $("#task").val();
+                var dataName = $("#dataSrc option:selected").text();       
                 var param = {
-                    'dataSrc' : task + "/" + dataType + "/" + dataName
+                    'dataSrc' : task + "/train/" + dataName
                 };
 
                 $.ajax({
