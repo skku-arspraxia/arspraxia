@@ -2,9 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>model_name</title>
 </head>
 <body>
-
+    <h1>1. 모델 기본 정보</h1>
+    <ul>
+        `<li>모델 이름: {{model_name}}</li>
+        <li>모델 ID: {{model_id}}</li>
+        <li>모델 task: {{model_task}}</li>
+    </ul>
+    <h1>2. 모델 학습 정보</h1>
+    <ul>
+        <li>epoch: {{epoch}}</li>
+        <li>batch size: {{batch_size}}</li>
+        <li>learning rate: {{learning_rate}}</li>
+    </ul>
+    <h1>3. 모델 성능</h1>
+    <ul>
+        <li>accuracy:{{accuracy}}</li>
+        <li>f1:{{f1}}</li>
+        <li>speed:{{speed}}</li>
+        <li>volume:{{volume}}</li>
+        <li>f1 score:{{f1}}</li>
+    </ul>
+    <h1>4. 비고</h1>
+        <li>{{description}}</li>
 </body>
 </html>
