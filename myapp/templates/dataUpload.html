@@ -1,17 +1,44 @@
 {% include 'header_inc.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>document</title>
-        <!--<script src="https://sdk.amazonaws.com/js/aws-sdk-2.809.0.min.js"></script>-->
-    </head>
+
     <body>
-        <input id="files" type="file" accept="text/csv"/>
-        <button id="button">업로드</button>
-        <!--<script src="{% static 'js/putFile.js' %}"></script>
-        <script src="{% static 'js/index.js' %}"></script>-->
+        <form id="fileForm" method="POST" onsubmit="return false;" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="task" name="task" value="{{task}}"/>
+            <input id="files" type="file" accept="text/csv"/>
+            <button id="button" onclick="fileUpload();">업로드</button>
+        </form>
     </body>
+    <script>
+        function fileUpload(){
+            if($("#files").get(0).files.length == 0){
+                alert("파일을 선택해주세요.");
+                return;
+            }
+
+            var form = $("#fileForm")[0];
+            var formData = new FormData(form);
+            formData.append("file", $("#files")[0].files[0]);
+            
+            $.ajaxSetup({
+                headers: { "X-CSRFToken": '{{csrf_token}}' }
+            });
+
+            $.ajax({
+                type : "POST",
+                enctype: 'multipart/form-data',
+                url : "/dataFileUploadAjax/",
+                data : formData,
+                processData : false,
+                contentType : false,
+                success : function(data){
+                    self.close();
+                    opener.location.reload();
+                },
+                error : function(data){
+                    alert("파일 업로드에 실패했습니다.");
+                }
+            });
+        }
+    </script>
 </html>
