@@ -66,14 +66,46 @@ def data(request):
                     filetype = filepath[2]
                     filename = filepath[3]
 
-                    if filetask == request.GET["task"]:
+                    if filetask == request.GET.get("task"):
                         if filetype == "train":
                             csvlist.append(filename + "." + filesrc[1])
-
+    
         context = {
-            "task" : request.GET["task"],
+            "task" : request.GET.get("task"),
             "csvlist" : csvlist
         }
+
+        if request.GET.get("fileName"):
+            datapath = ''
+            datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
+            data_src = "data/" + request.GET.get("task") + "/train/" + request.GET.get("fileName")
+            datapath = datapath_url + data_src
+
+            try:
+                df = pd.read_csv(datapath, encoding="utf-8") 
+            except:   
+                df = pd.read_csv(datapath, encoding="cp949")       
+
+            board_list = []
+            for obj in df.values.tolist():
+                board_list.append({'text':obj[0],'sentiment':obj[1]})
+                
+            page = request.GET.get('page', '1')
+            paginator = Paginator(board_list, '10')
+            page_obj = paginator.page(page)   
+
+            page_numbers_range = 10
+            max = len(paginator.page_range)
+            current_page = int(page) if page else 1
+
+            start = int((current_page - 1) / page_numbers_range) * page_numbers_range
+            end = start + page_numbers_range
+            if end >= max:
+                    end = max
+
+            context['fileName'] = request.GET.get("fileName")
+            context['page_obj'] = page_obj
+            context['page_range'] = paginator.page_range[start:end]
 
         return render(request, 'data.html', context)
 
@@ -112,29 +144,6 @@ def dataFileUploadAjax(request):
 
         context = {
                 "result" : "success"
-        }
-
-        return JsonResponse(context)
-
-        
-def dataSelectAjax(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-        datapath = ''
-        datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
-        data_src = request.GET["dataSrc"]
-        datapath = datapath_url + data_src
-
-        try:
-            df = pd.read_csv(datapath, encoding="utf-8") 
-        except:   
-            df = pd.read_csv(datapath, encoding="cp949")       
-     
-        json_records = df.reset_index().to_json(orient='records')
-        data = json.loads(json_records)
-        context = {
-                'data' : data
         }
 
         return JsonResponse(context)

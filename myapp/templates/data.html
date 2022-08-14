@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load mathfilters %}
 {% block mycontent %}
 
     <input type="hidden" class="pagetitle" value="데이터 관리"/>
     <input type="hidden" class="pageno" value="1"/>
     
+    <form action="/data/" method="GET" class="dataform">
+        <input type="hidden" name="task" value="{{task}}"/>
+        <input type="hidden" name="fileName" class="fileName" value=""/>
+    </form>
+
     <div class="row g-3">
         <div class="col-md-12">
             <label class="form-label label-data" for="dataSrc">
@@ -25,62 +31,81 @@
             {% endif %}
         </div>
     </div>
+
     <hr class="my-4">
 
-    <div class="container"></div>
+    {% if page_obj %}
+        <div class="container">
+            <table class="table table-light table-striped" style="text-align:center;">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">번호</th>
+                        <th style="width:45%;">문장</th>
+                        <th style="width:10%;">결과</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page_obj %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ data.text }}</td>
+                            <td>{{ data.sentiment }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="paging">
+            <ul class="pagination justify-content-center" style="margin-top: 2rem;">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_obj.previous_page_number}}">이전</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+                    </li>
+                {% endif %}
+                {% for page_number in page_range %}
+                    {% if page_number == page_obj.number %}
+                        <li class="page-item active" aria-current="page">
+                            <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_number}}">{{ page_number }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_number}}">{{ page_number }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_obj.next_page_number}}">다음</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
 
     <script>
-
-        function dataSelect(_this, dataType){
+        function dataSelect(_this){
             if($(_this).val() > 0){
-                $(".container").html("<img src='{% static 'img/loading.gif' %}'/>");
-                $(".hyperparam").attr("disabled", true);
-
-                var task = $("#task").val();
-                var dataName = $("#dataSrc option:selected").text();       
-                var param = {
-                    'dataSrc' : "data/" + task + "/train/" + dataName
-                };
-
-                $.ajax({
-                    url : "/dataSelectAjax/",
-                    type : "GET",
-                    data : param,
-                    dataType : "json",
-                    success : function(data) { 
-                        var appendHTML = "";
-                        appendHTML += "<table class='table table-light table-striped'>";
-                        appendHTML += " <thead>";
-                        appendHTML += "     <tr>";
-                        appendHTML += "         <th>No</th>";
-                        appendHTML += "         <th>Text</th>";
-                        appendHTML += "         <th>Sentiment</th>";
-                        appendHTML += "     </tr>";
-                        appendHTML += " </thead>";
-                        appendHTML += " <tbody>";
-                        for(var i=0;i<data.data.length;i++){
-                            appendHTML += "     <tr> ";
-                            appendHTML += "         <td>"+(data.data[i].index+1)+"</td>";
-                            appendHTML += "         <td>"+data.data[i].text+"</td>";
-                            appendHTML += "         <td>"+data.data[i].sentiment+"</td>";
-                            appendHTML += "     </tr>";
-                        }
-                        appendHTML += " </tbody>";
-                        appendHTML += "</table>";
-
-                        $(".container").html(appendHTML);
-                    }, 
-                    error : function(e) {
-                        modalShow("데이터 불러오기에 실패했습니다.");
-                        $(".container").html("");
-                        console.log("error :" + e.response);
-                    },
-                    complete : function(){
-                        $(".hyperparam").attr("disabled", false);      
-                    }
-                });
+                $("input.fileName").val($("#dataSrc option:selected").text());  
+                $(".hyperparam").attr("disabled", true); 
+                $(".dataform").submit();
             }
         }
+
+        $(document).ready(function(){
+            $("#dataSrc option").each(function(){
+                if($(this).text() == '{{fileName}}'){
+                    $(this).attr("selected", true);
+                }
+            });
+        });
 
     </script>
 
