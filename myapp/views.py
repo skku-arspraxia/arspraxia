@@ -62,14 +62,46 @@ def data(request):
                     filetype = filepath[2]
                     filename = filepath[3]
 
-                    if filetask == request.GET["task"]:
+                    if filetask == request.GET.get("task"):
                         if filetype == "train":
                             csvlist.append(filename + "." + filesrc[1])
-
+    
         context = {
-            "task" : request.GET["task"],
+            "task" : request.GET.get("task"),
             "csvlist" : csvlist
         }
+
+        if request.GET.get("fileName"):
+            datapath = ''
+            datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
+            data_src = "data/" + request.GET.get("task") + "/train/" + request.GET.get("fileName")
+            datapath = datapath_url + data_src
+
+            try:
+                df = pd.read_csv(datapath, encoding="utf-8") 
+            except:   
+                df = pd.read_csv(datapath, encoding="cp949")       
+
+            json_records = df.reset_index().to_json(orient='records')
+            data = json.loads(json_records)
+
+            #board_list = df.values.tolist()   
+
+            board_list = []
+
+            print(df.to_dict())
+
+            for obj in df.to_dict():
+                board_list.append(obj)
+            
+            print(board_list)
+                
+            page = request.GET.get('page', '1')
+            paginator = Paginator(board_list, '10')
+            page_obj = paginator.page(page)   
+
+            context['fileName'] = request.GET.get("fileName")
+            context['page_obj'] = page_obj
 
         return render(request, 'data.html', context)
 
@@ -126,11 +158,18 @@ def dataSelectAjax(request):
             df = pd.read_csv(datapath, encoding="utf-8") 
         except:   
             df = pd.read_csv(datapath, encoding="cp949")       
-     
+
         json_records = df.reset_index().to_json(orient='records')
         data = json.loads(json_records)
+
+        board_list = df.values.tolist()   
+    
+        page = request.GET.get('page', '1')
+        paginator = Paginator(board_list, '10')
+        page_obj = paginator.page(page)
+
         context = {
-                'data' : data
+                'page_obj' : list(page_obj)
         }
 
         return JsonResponse(context)
