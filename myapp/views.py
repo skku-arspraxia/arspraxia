@@ -40,6 +40,10 @@ def login(request):
                         
         return render(request, 'login.html')
         
+def logout(request):
+        request.session.flush()
+        return redirect('/login')
+        
 
 def data(request):
         if logincheck(request):

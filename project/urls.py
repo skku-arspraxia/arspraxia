@@ -5,6 +5,7 @@ from myapp import views
 urlpatterns = [
     path('', views.login),
     path('login/', views.login),
+    path('logout/',views.logout),
     path('data/', views.data),
     path('dataUpload/', views.dataUpload),
     path('dataFileUploadAjax/', views.dataFileUploadAjax),

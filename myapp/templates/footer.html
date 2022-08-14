@@ -8,7 +8,7 @@
     <script>
 
         $(document).ready(function(){
-
+            noBack();
             // 좌측 네비 스타일
             $(".nav-link").removeClass("active");
             $("li.nav-item:nth-child("+$("input.pageno").val()+") .nav-link").addClass("active");
@@ -37,6 +37,12 @@
           $("#msg_popup").modal("hide");
         }
         
+        function noBack(){
+          window.history.forward();
+        }
+        
+        window.history.forward();
+
     </script>
   </body>
 </html>
