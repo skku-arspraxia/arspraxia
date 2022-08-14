@@ -45,12 +45,6 @@ def data(request):
         if logincheck(request):
                 return redirect('/login/')
 
-        s3c = boto3.client(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
-
         s3r = boto3.resource(
                 's3',
                 aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
@@ -60,18 +54,21 @@ def data(request):
         csvlist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
-                task = my_bucket_object.key.split('/')[0]
-                if task == request.GET["task"]:
-                        if len(my_bucket_object.key.split('.')) > 1:
-                                filetype = my_bucket_object.key.split('.')[0].split("/")[1]
-                                if filetype == "train":
-                                        if my_bucket_object.key.split('.')[1] == "csv":    
-                                                filename = my_bucket_object.key.split('.')[0].split("/")[2]                                            
-                                                csvlist.append(filename + ".csv")
+            filesrc = my_bucket_object.key.split('.')
+            if len(filesrc) > 1:
+                if filesrc[1] == "csv":
+                    filepath = filesrc[0].split("/")
+                    filetask = filepath[1]
+                    filetype = filepath[2]
+                    filename = filepath[3]
+
+                    if filetask == request.GET["task"]:
+                        if filetype == "train":
+                            csvlist.append(filename + "." + filesrc[1])
 
         context = {
-                "task" : request.GET["task"],
-                "csvlist" : csvlist
+            "task" : request.GET["task"],
+            "csvlist" : csvlist
         }
 
         return render(request, 'data.html', context)
@@ -102,7 +99,7 @@ def dataFileUploadAjax(request):
         file = request.FILES['file']
         filename = file.name
         task = request.POST["task"]
-        fileuploadname = task + "/train/" + filename
+        fileuploadname = "data/"+ task + "/train/" + filename
         s3c.upload_fileobj(
                 file,
                 'arspraxiabucket',
@@ -119,12 +116,6 @@ def dataFileUploadAjax(request):
 def dataSelectAjax(request):
         if logincheck(request):
                 return redirect('/login/')
-
-        s3r = boto3.resource(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
 
         datapath = ''
         datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
@@ -158,14 +149,17 @@ def train(request):
         csvlist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
-                task = my_bucket_object.key.split('/')[0]
-                if task == request.GET["task"]:
-                        if len(my_bucket_object.key.split('.')) > 1:
-                                filetype = my_bucket_object.key.split('.')[0].split("/")[1]
-                                if filetype == "train":
-                                        if my_bucket_object.key.split('.')[1] == "csv":    
-                                                filename = my_bucket_object.key.split('.')[0].split("/")[2]                                            
-                                                csvlist.append(filename + ".csv")
+            filesrc = my_bucket_object.key.split('.')
+            if len(filesrc) > 1:
+                if filesrc[1] == "csv":
+                    filepath = filesrc[0].split("/")
+                    filetask = filepath[1]
+                    filetype = filepath[2]
+                    filename = filepath[3]
+
+                    if filetask == request.GET["task"]:
+                        if filetype == "train":
+                            csvlist.append(filename + "." + filesrc[1])
                                 
         context = {
                 "task" : request.GET["task"],
@@ -209,18 +203,21 @@ def inference(request):
                 aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
         )
-        
+                
         csvlist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
-                task = my_bucket_object.key.split('/')[0]
-                if task == request.GET["task"]:
-                        if len(my_bucket_object.key.split('.')) > 1:
-                                filetype = my_bucket_object.key.split('.')[0].split("/")[1]
-                                if filetype == "inf":
-                                        if my_bucket_object.key.split('.')[1] == "csv":    
-                                                filename = my_bucket_object.key.split('.')[0].split("/")[2]                                            
-                                                csvlist.append(filename + ".csv")
+            filesrc = my_bucket_object.key.split('.')
+            if len(filesrc) > 1:
+                if filesrc[1] == "csv":
+                    filepath = filesrc[0].split("/")
+                    filetask = filepath[1]
+                    filetype = filepath[2]
+                    filename = filepath[3]
+
+                    if filetask == request.GET["task"]:
+                        if filetype == "inf":
+                            csvlist.append(filename + "." + filesrc[1])
 
         context = {
                 "task" : request.GET["task"],
@@ -281,7 +278,7 @@ def inferenceFileUploadAjax(request):
         file = request.FILES['file']
         filename = file.name
         task = request.POST["task"]
-        fileuploadname = task + "/inf/" + filename
+        fileuploadname = "data/" + task + "/inf/" + filename
         s3c.upload_fileobj(
                 file,
                 'arspraxiabucket',
