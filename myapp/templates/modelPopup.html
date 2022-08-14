@@ -5,27 +5,107 @@
     <title>model_name</title>
 </head>
 <body>
-    <h1>1. 모델 기본 정보</h1>
-    <ul>
-        `<li>모델 이름: {{model_name}}</li>
-        <li>모델 ID: {{model_id}}</li>
-        <li>모델 task: {{model_task}}</li>
-    </ul>
-    <h1>2. 모델 학습 정보</h1>
-    <ul>
-        <li>epoch: {{epoch}}</li>
-        <li>batch size: {{batch_size}}</li>
-        <li>learning rate: {{learning_rate}}</li>
-    </ul>
-    <h1>3. 모델 성능</h1>
-    <ul>
-        <li>accuracy:{{accuracy}}</li>
-        <li>f1:{{f1}}</li>
-        <li>speed:{{speed}}</li>
-        <li>volume:{{volume}}</li>
-        <li>f1 score:{{f1}}</li>
-    </ul>
-    <h1>4. 비고</h1>
-        <li>{{description}}</li>
+    <div class="col-md-12">
+            <h1>{{model_name}}</h1>
+    </div>
+
+    <hr width = "100%" color = "black" size = "3">
+
+    <div class="col-md-12">
+            <p>{{model_name}}의 기본 정보, 학습시 사용된 parameter들의 정보, 학습 성능을 확인할 수 있습니다.<br>
+                학습에 사용된 pre-trained model과 data-set의 정보는 아래와 같습니다.<br><br>
+                <div style="height: auto; width: 500px; border:1px solid black;">
+                     &nbsp;&nbsp;&nbsp;&nbsp;{{description}}
+                </div>
+                </p>
+    </div>
+    <br>
+
+    <div class="col-md-12">
+            <h2>Basic Information</h2>
+    </div>
+
+    <hr width = "90%" color = "black" size = "2" align="left">
+
+    <div class="col-md-12">
+            <p>모델의 id, 모델 이름, 모델의 task(ner/sa), 모델 생성 날짜 정보를 확인할 수 있습니다.<br><br></p>
+            <table class="Basic_Inf_table" width="80%" style="text-align:center;">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">ID</th>
+                        <th style="width:35%;">모델이름</th>
+                        <th style="width:10%;">TASK</th>
+                        <th style="width:30%;">DATE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{model_id}}</td>
+                        <td>{{model_name}}</td>
+                        <td>{{model_task}}</td>
+                        <td>{{date}}</td>
+                    </tr>
+                </tbody>
+            </table>
+    </div>
+
+    <br>
+
+    <div class="col-md-12">
+            <h2>Training Information</h2>
+    </div>
+
+    <hr width = "90%" color = "black" size = "2" align="left">
+
+    <div class="col-md-12">
+            <p>모델학습에 사용된 파라미터(Epoch, Batch size, Learning rate)의 정보를 확인할 수 있습니다.<br><br></p>
+            <table class="Training_Inf_table" width="50%" style="text-align:center;">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">Epoch</th>
+                        <th style="width:45%;">Batch Size</th>
+                        <th style="width:30%;">Learning Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{epoch}}</td>
+                        <td>{{batch_size}}</td>
+                        <td>{{learning_rate}}</td>
+                    </tr>
+                </tbody>
+            </table>
+    </div>
+
+    <br>
+
+    <div class="col-md-12">
+            <h2>Performance of Trained Model</h2>
+    </div>
+
+    <hr width = "90%" color = "black" size = "2" align="left">
+
+    <div class="col-md-12">
+            <p>학습된 모델의 성능 정보(accuracy, f1 score, speed, volume)를 확인할 수 있습니다.<br><br></p>
+            <table class="Performance_table" width="50%" style="text-align:center;">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">Accuracy</th>
+                        <th style="width:45%;">f1 score</th>
+                        <th style="width:30%;">Speed</th>
+                        <th style="width:30%;">Volume</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{accuracy}}</td>
+                        <td>{{f1}}</td>
+                        <td>{{speed}}</td>
+                        <td>{{volume}}</td>
+                    </tr>
+                </tbody>
+            </table>
+    </div>
+
 </body>
 </html>

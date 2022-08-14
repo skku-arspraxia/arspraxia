@@ -311,13 +311,25 @@ def models(request):
 
         board_list = list(NLP_models.objects.filter(model_task=request.GET["task"]))
         page = request.GET.get('page', '1')
-        paginator = Paginator(board_list, '10')
+        paginator = Paginator(board_list, '2')
         page_obj = paginator.page(page)
+
+        page_numbers_range = 10
+        max = len(paginator.page_range)
+        current_page = int(page) if page else 1
+
+        start = int((current_page - 1) / page_numbers_range) * page_numbers_range
+        end = start + page_numbers_range
+        if end >= max:
+                end = max
+
+        page_range = paginator.page_range[start:end]
 
 
         context = {
                 "task" : request.GET["task"],
-                "page_obj" : page_obj
+                "page_obj" : page_obj,
+                "page_range" : page_range
         }
 
         return render(request, 'models.html', context)

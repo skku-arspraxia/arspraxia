@@ -16,10 +16,10 @@
                     <option hidden="" value="0">데이터를 선택해주세요</option>
                         {% for csv in csvlist %}
                             <option value="{{forloop.counter}}">{{ csv }}</option>
-                        {% endfor %}    
-                </select>            
+                        {% endfor %}
+                </select>
             {% else %}
-                <select id="dataSrc" class="form-select hyperparam" disabled> 
+                <select id="dataSrc" class="form-select hyperparam" disabled>
                     <option hidden="" value="0">데이터가 없습니다</option>
                 </select>
             {% endif %}
