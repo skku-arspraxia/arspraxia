@@ -86,26 +86,26 @@ def data(request):
             except:   
                 df = pd.read_csv(datapath, encoding="cp949")       
 
-            json_records = df.reset_index().to_json(orient='records')
-            data = json.loads(json_records)
-
-            #board_list = df.values.tolist()   
-
             board_list = []
-
-            print(df.to_dict())
-
-            for obj in df.to_dict():
-                board_list.append(obj)
-            
-            print(board_list)
+            for obj in df.values.tolist():
+                board_list.append({'text':obj[0],'sentiment':obj[1]})
                 
             page = request.GET.get('page', '1')
             paginator = Paginator(board_list, '10')
             page_obj = paginator.page(page)   
 
+            page_numbers_range = 10
+            max = len(paginator.page_range)
+            current_page = int(page) if page else 1
+
+            start = int((current_page - 1) / page_numbers_range) * page_numbers_range
+            end = start + page_numbers_range
+            if end >= max:
+                    end = max
+
             context['fileName'] = request.GET.get("fileName")
             context['page_obj'] = page_obj
+            context['page_range'] = paginator.page_range[start:end]
 
         return render(request, 'data.html', context)
 
@@ -144,36 +144,6 @@ def dataFileUploadAjax(request):
 
         context = {
                 "result" : "success"
-        }
-
-        return JsonResponse(context)
-
-        
-def dataSelectAjax(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-        datapath = ''
-        datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
-        data_src = request.GET["dataSrc"]
-        datapath = datapath_url + data_src
-
-        try:
-            df = pd.read_csv(datapath, encoding="utf-8") 
-        except:   
-            df = pd.read_csv(datapath, encoding="cp949")       
-
-        json_records = df.reset_index().to_json(orient='records')
-        data = json.loads(json_records)
-
-        board_list = df.values.tolist()   
-    
-        page = request.GET.get('page', '1')
-        paginator = Paginator(board_list, '10')
-        page_obj = paginator.page(page)
-
-        context = {
-                'page_obj' : list(page_obj)
         }
 
         return JsonResponse(context)

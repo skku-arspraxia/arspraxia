@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load mathfilters %}
 {% block mycontent %}
 
     <input type="hidden" class="pagetitle" value="데이터 관리"/>
     <input type="hidden" class="pageno" value="1"/>
     
+    <form action="/data/" method="GET" class="dataform">
+        <input type="hidden" name="task" value="{{task}}"/>
+        <input type="hidden" name="fileName" class="fileName" value=""/>
+    </form>
+
     <div class="row g-3">
         <div class="col-md-12">
             <label class="form-label label-data" for="dataSrc">
@@ -60,7 +66,7 @@
                         <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
                     </li>
                 {% endif %}
-                {% for page_number in page_obj.paginator.page_range %}
+                {% for page_number in page_range %}
                     {% if page_number == page_obj.number %}
                         <li class="page-item active" aria-current="page">
                             <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_number}}">{{ page_number }}</a>
@@ -85,72 +91,21 @@
     {% endif %}
 
     <script>
-        var tmp;
         function dataSelect(_this){
             if($(_this).val() > 0){
-                $(".container").html("<img src='{% static 'img/loading.gif' %}'/>");
-                $(".hyperparam").attr("disabled", true);
-
-                var task = $("#task").val();
-                var dataName = $("#dataSrc option:selected").text();       
-                var param = {
-                    'dataSrc' : "data/" + task + "/train/" + dataName
-                };
-
-                $.ajax({
-                    url : "/dataSelectAjax/",
-                    type : "GET",
-                    data : param,
-                    dataType : "json",
-                    success : function(data) { 
-                        tmp = data;
-                        var appendHTML = "";
-                        appendHTML += "<table class='table table-light table-striped'>";
-                        appendHTML += " <thead>";
-                        appendHTML += "     <tr>";
-                        appendHTML += "         <th>No</th>";
-                        appendHTML += "         <th>Text</th>";
-                        appendHTML += "         <th>Sentiment</th>";
-                        appendHTML += "     </tr>";
-                        appendHTML += " </thead>";
-                        appendHTML += " <tbody>";       
-                        for(var i=0;i<data.page_obj.length;i++){
-                            appendHTML += "     <tr> ";
-                            appendHTML += "         <td>"+(i+1)+"</td>";
-                            appendHTML += "         <td>"+data.page_obj[i][0]+"</td>";
-                            appendHTML += "         <td>"+data.page_obj[i][1]+"</td>";
-                            appendHTML += "     </tr>";
-                        }
-                        appendHTML += " </tbody>";
-                        appendHTML += "</table>";
-
-                        appendHTML += '<div id="paging">';
-                        appendHTML += '<ul class="pagination justify-content-center" style="margin-top: 2rem;">';
-                        appendHTML += '<li class="page-item">';
-                        appendHTML += '<a class="page-link" href="#">이전</a>';
-                        appendHTML += '</li>';
-                        appendHTML += '<li class="page-item active" aria-current="page">';
-                        appendHTML += '<a class="page-link" href="#"></a>';
-                        appendHTML += '</li>';
-                        appendHTML += '<li class="page-item">';
-                        appendHTML += '<a class="page-link" href="#">다음</a>';
-                        appendHTML += '</li>';
-                        appendHTML += '</ul>';
-                        appendHTML += '</div>';
-
-                        $(".container").html(appendHTML);
-                    }, 
-                    error : function(e) {
-                        modalShow("데이터 불러오기에 실패했습니다.");
-                        $(".container").html("");
-                        console.log("error :" + e.response);
-                    },
-                    complete : function(){
-                        $(".hyperparam").attr("disabled", false);      
-                    }
-                });
+                $("input.fileName").val($("#dataSrc option:selected").text());  
+                $(".hyperparam").attr("disabled", true); 
+                $(".dataform").submit();
             }
         }
+
+        $(document).ready(function(){
+            $("#dataSrc option").each(function(){
+                if($(this).text() == '{{fileName}}'){
+                    $(this).attr("selected", true);
+                }
+            });
+        });
 
     </script>
 
