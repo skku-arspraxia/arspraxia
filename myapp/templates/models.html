@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block mycontent %}
 
-    
 
     <input type="hidden" class="pagetitle" value="모델 성능 분석"/>
     <input type="hidden" class="pageno" value="4"/>
@@ -69,11 +68,5 @@
             {% endif %}
         </ul>
     </div>
-
-    <script type="text/javascript">
-        window.history.forward();
-        function noBack(){window.history.forward();}
-    </script> 
-    <body onload="noBack();" onpageshow="if(event.persisted) noBack();" onunload="">
     
 {% endblock %}
