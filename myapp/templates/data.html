@@ -39,7 +39,7 @@
                 var task = $("#task").val();
                 var dataName = $("#dataSrc option:selected").text();       
                 var param = {
-                    'dataSrc' : task + "/train/" + dataName
+                    'dataSrc' : "data/" + task + "/train/" + dataName
                 };
 
                 $.ajax({
