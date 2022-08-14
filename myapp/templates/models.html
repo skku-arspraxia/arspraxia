@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load mathfilters %}
 {% block mycontent %}
 
     <input type="hidden" class="pagetitle" value="모델 성능 분석"/>
@@ -26,7 +28,7 @@
                             <td>{{ data.accuracy }} %</td>
                             <td>{{ data.date | date:"Y년 m월 d일" }}</td>
                             <td>
-                                <button onclick="window.open('/modelPopup/?id={{data.id}}','window_name','width=700,height=500');">보기</button>
+                                <button onclick="window.open('/modelPopup/?id={{data.id}}','window_name','width=700,height=1000');">보기</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -45,7 +47,7 @@
                     <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
                 </li>
             {% endif %}
-            {% for page_number in page_obj.paginator.page_range %}
+            {% for page_number in page_range %}
                 {% if page_number == page_obj.number %}
                     <li class="page-item active" aria-current="page">
                         <a class="page-link" href="/models/?task={{task}}&page={{ page_number }}">{{ page_number }}</a>
