@@ -13,6 +13,7 @@ from django.db import connection
 from .models import NLP_models
 
 #from myapp.ml_sa import SKKU_SENTIMENT
+from myapp.sa_test import SKKU_SENTIMENT
 
 @csrf_exempt
 def login(request):
@@ -241,6 +242,31 @@ def inferenceUpload(request):
         return render(request, 'inferenceUpload.html', context)
 
 
+
+def inferenceSA(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        skku_sa = SKKU_SENTIMENT()
+
+        sentence = "류도현 존나 잘생김"
+        result = skku_sa(sentence)
+        print("@@@@"+result)
+
+        # 결과 json으로
+
+        context = {
+                "task" : request.GET["task"],
+                #"result_json" : result_json
+        }
+
+        return render(request, 'inferenceSA.html', context)
+
+
+def inferenceNER(request):
+    pass
+
+
 @csrf_exempt
 def inferenceFileUploadAjax(request):
         if logincheck(request):
@@ -286,7 +312,7 @@ def models(request):
 
         return render(request, 'models.html', context)
 
-        
+
 def modelPopup(request):
         if request.method == 'GET':
                 
