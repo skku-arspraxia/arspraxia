@@ -47,7 +47,7 @@
                 <tbody>
                     {% for data in page_obj %}
                         <tr>
-                            <td>{{ forloop.counter }}</td>
+                            <td>{{ forloop.counter | add:startIdx }}</td>
                             <td>{{ data.text }}</td>
                             <td>{{ data.sentiment }}</td>
                         </tr>
