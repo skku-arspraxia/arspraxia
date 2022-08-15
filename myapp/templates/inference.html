@@ -9,7 +9,7 @@
         <div class="col-md-12">
             <label for="dataSrc" class="form-label label-data">
                 Data Set
-                <a class="a-dataUpload" onclick="window.open('/inferenceUpload/?task={{task}}','','width=800;height=800');">[데이터 업로드]</a>
+                <a class="a-dataUpload" onclick="window.open('/inferenceUpload/?task={{task}}','','width=400,height=400;');">[데이터 업로드]</a>
             </label>
             {% if csvlist %}
                 <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">

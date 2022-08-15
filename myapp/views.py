@@ -5,12 +5,14 @@ import pandas as pd
 import json
 import chardet
 
+from urllib.parse import quote
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db import connection
 from .models import NLP_models
+
 
 #from myapp.ml_sa import SKKU_SENTIMENT
 from myapp.sa_test import SKKU_SENTIMENT
@@ -39,6 +41,7 @@ def login(request):
                         connection.rollback()
                         
         return render(request, 'login.html')
+
         
 def logout(request):
         request.session.flush()
@@ -78,8 +81,9 @@ def data(request):
         if request.GET.get("fileName"):
             datapath = ''
             datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
-            data_src = "data/" + request.GET.get("task") + "/train/" + request.GET.get("fileName")
+            data_src = "data/" + request.GET.get("task") + "/train/" + quote(request.GET.get("fileName"))
             datapath = datapath_url + data_src
+            print(datapath)
 
             try:
                 df = pd.read_csv(datapath, encoding="utf-8") 
@@ -88,10 +92,10 @@ def data(request):
 
             board_list = []
             for obj in df.values.tolist():
-                board_list.append({'text':obj[0],'sentiment':obj[1]})
+                board_list.append({'text':obj[0], 'sentiment':obj[1]})
                 
             page = request.GET.get('page', '1')
-            paginator = Paginator(board_list, '10')
+            paginator = Paginator(board_list, '30')
             page_obj = paginator.page(page)   
 
             page_numbers_range = 10
@@ -103,9 +107,12 @@ def data(request):
             if end >= max:
                     end = max
 
+            startIdx = int(page_obj.paginator.per_page) * (int(page) - 1)
+
             context['fileName'] = request.GET.get("fileName")
             context['page_obj'] = page_obj
             context['page_range'] = paginator.page_range[start:end]
+            context['startIdx'] = startIdx
 
         return render(request, 'data.html', context)
 
@@ -132,15 +139,18 @@ def dataFileUploadAjax(request):
                 aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
         )
 
-        file = request.FILES['file']
-        filename = file.name
-        task = request.POST["task"]
-        fileuploadname = "data/"+ task + "/train/" + filename
-        s3c.upload_fileobj(
-                file,
-                'arspraxiabucket',
-                fileuploadname
-        )
+        filelist = request.FILES.getlist('file')
+
+        for file in filelist:
+            filename = file.name
+            task = request.POST["task"]
+            fileuploadname = "data/"+ task + "/train/" + filename
+
+            s3c.upload_fileobj(
+                    file,
+                    'arspraxiabucket',
+                    fileuploadname
+            )
 
         context = {
                 "result" : "success"
@@ -252,7 +262,6 @@ def inferenceUpload(request):
         return render(request, 'inferenceUpload.html', context)
 
 
-
 def inferenceSA(request):
         if logincheck(request):
                 return redirect('/login/')
@@ -288,16 +297,19 @@ def inferenceFileUploadAjax(request):
                 aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
         )
 
-        file = request.FILES['file']
-        filename = file.name
-        task = request.POST["task"]
-        fileuploadname = "data/" + task + "/inf/" + filename
-        s3c.upload_fileobj(
-                file,
-                'arspraxiabucket',
-                fileuploadname
-        )
+        filelist = request.FILES.getlist('file')
 
+        for file in filelist:
+            filename = file.name
+            task = request.POST["task"]
+            fileuploadname = "data/"+ task + "/inf/" + filename
+
+            s3c.upload_fileobj(
+                    file,
+                    'arspraxiabucket',
+                    fileuploadname
+            )
+            
         context = {
                 "result" : "success"
         }
@@ -311,7 +323,7 @@ def models(request):
 
         board_list = list(NLP_models.objects.filter(model_task=request.GET["task"]))
         page = request.GET.get('page', '1')
-        paginator = Paginator(board_list, '2')
+        paginator = Paginator(board_list, '10')
         page_obj = paginator.page(page)
 
         page_numbers_range = 10
@@ -325,11 +337,13 @@ def models(request):
 
         page_range = paginator.page_range[start:end]
 
+        startIdx = int(page_obj.paginator.per_page) * (int(page) - 1)
 
         context = {
                 "task" : request.GET["task"],
                 "page_obj" : page_obj,
-                "page_range" : page_range
+                "page_range" : page_range,
+                "startIdx" : startIdx
         }
 
         return render(request, 'models.html', context)

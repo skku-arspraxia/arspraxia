@@ -23,7 +23,7 @@
                 <tbody>
                     {% for data in page_obj %}
                         <tr>
-                            <td>{{ forloop.counter }}</td>
+                            <td>{{ forloop.counter | add:startIdx }}</td>
                             <td>{{ data.model_name }}</td>
                             <td>{{ data.volume }} MB</td>
                             <td>{{ data.accuracy }} %</td>

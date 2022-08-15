@@ -12,15 +12,15 @@
         </div>
         <div class="col-sm-6">
             <label for="modelepoch" class="form-label">Epoch</label>
-            <input type="number" class="form-control hyperparam" id="modelepoch" name="modelepoch" placeholder="에포크를 설정해주세요" value="" />
+            <input type="number" class="form-control hyperparam hpnum" id="modelepoch" name="modelepoch" min="0" placeholder="에포크를 설정해주세요" value="" />
         </div>
         <div class="col-sm-6">
             <label for="modellr" class="form-label">Learning Rate</label>
-            <input type="number" class="form-control hyperparam" id="modellr" name="modellr" placeholder="학습률을 설정해주세요" value="" />
+            <input type="number" class="form-control hyperparam hpnum" id="modellr" name="modellr" min="0" placeholder="학습률을 설정해주세요" value="" />
         </div>
         <div class="col-sm-6">
             <label for="modelbs" class="form-label">Batch Size</label>
-            <input type="number" class="form-control hyperparam" id="modelbs" name="modelbs" placeholder="배치사이즈를 설정해주세요" value="" />
+            <input type="number" class="form-control hyperparam hpnum" id="modelbs" name="modelbs" min="0" placeholder="배치사이즈를 설정해주세요" value="" />
         </div>
         <div class="col-md-12">
             <label for="pretrained" class="form-label">Model</label>
@@ -75,14 +75,18 @@
     -->
 
     <script>
-        /* 네비 및 페이지 타이틀 설정 */
+
         $(document).ready(function(){
             $(".trainstart").click(function(){
                 //$(".hyperparam, .trainstart").attr("disabled", true);
                 //$(this).text("Training....");
             });
 
-            $(".col-lg-8").css("width","100%");
+            $(".hpnum").onkeydown = function(e) {
+                if(!((e.keyCode > 95 && e.keyCode < 106) || (e.keyCode > 47 && e.keyCode < 58) || e.keyCode == 8)) {
+                    return false;
+                }
+            };
         });
 
         function insertResult(){
@@ -138,6 +142,7 @@
                 }
             });
         }
+
     </script>
 
 {% endblock %}

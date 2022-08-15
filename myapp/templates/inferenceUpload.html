@@ -1,44 +1,192 @@
 {% include 'header_inc.html' %}
 {% load static %}
 
-    <body>
+    <head>
+        <style>
+            html, body{
+                margin: 0;
+                padding: 0;
+            }
+
+            .frame {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 400px;
+                height: 400px;
+                margin-top: -200px;
+                margin-left: -200px;
+                border-radius: 2px;
+                box-shadow: 4px 8px 16px 0 rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                background:  #ececec;
+                color: #333;
+                font-family: "Open Sans", Helvetica, sans-serif;
+            }
+
+            .center {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 300px;
+                height: 260px;
+                border-radius: 3px;
+                box-shadow: 8px 10px 15px 0 rgba(0, 0, 0, 0.2);
+                background: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: space-evenly;
+                flex-direction: column;
+            }
+
+            .dropzone {
+                position: relative;
+                width: 200px;
+                height: 160px;
+                border: 1px dashed #999;
+                border-radius: 3px;
+                text-align: center;
+            }
+
+            .upload-icon {
+                margin-top: 65px;
+            }
+
+            .upload-ment{
+                font-size: 8px;
+                color: #999;
+            }
+
+            .upload-input {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: 0;
+            }
+
+            .upload-list {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: none;
+                overflow-y: scroll;            
+            }
+
+            .upload-list p {
+                margin: 0;
+                text-align: left;
+            }
+
+        </style>
+    </head>
+    <body>        
+        <!-- Modal -->
+        <div class="modal" id="msg_popup" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">알림</h5>
+                    </div>
+                    <div class="modal-body">파일을 선택해주세요.</div>
+                    <div class="modal-footer" id="btn_alert">
+                        <button type="button" id="alert_ok" class="btn btn-primary" data-dismiss="modal" onclick="modalHide();">닫기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         <form id="fileForm" method="POST" onsubmit="return false;" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="hidden" id="task" name="task" value="{{task}}"/>
-            <input id="files" type="file" accept="text/csv"/>
-            <button id="button" onclick="fileUpload();">업로드</button>
+            <div class="frame">
+                <div class="center" >
+                    <div class="dropzone" >
+                        {% csrf_token %}
+                        <input type="hidden" id="task" name="task" value="{{task}}"/>
+                        <img src="{% static 'img/upload.png' %}" class="upload-icon" id = fileimg/></br>
+                        <span class="upload-ment">파일을 드래그하거나 클릭해주세요.</span>
+                        <input id="files" class="upload-input" type="file" name="files" accept="text/csv" multiple/>
+                        <div class="upload-list"></div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" name="uploadbutton" onclick="fileUpload();">파일 업로드</button>
+                        <button type="button" class="btn btn-primary" name="uploadbutton" onclick="fileTransmit();">전송</button>
+                    </div>
+                </div>
+            </div>
         </form>
     </body>
     <script>
+        $(document).ready(function(){
+            $("#files").change(function(){
+                $(".upload-icon, .upload-ment").hide(); 
+                $(".upload-list").show(); 
+
+                var _this = $("#files").get(0).files;
+                for(var i=0;i<_this.length;i++){
+                    var appendHTML = "";
+                    appendHTML += "<p>";
+                    appendHTML += _this[i].name;
+                    appendHTML += "<span data-feather='folder' class='align-text-bottom'></span>";
+                    appendHTML += "</p>";
+
+                    $(".upload-list").append(appendHTML);
+                }
+            });
+
+        });
+        
         function fileUpload(){
+            $("#files").click();
+        }
+
+        function fileTransmit(){
             if($("#files").get(0).files.length == 0){
-                alert("파일을 선택해주세요.");
+                modalShow("파일을 선택해주세요.");
                 return;
             }
 
+            var _this = $("#files")[0].files;
             var form = $("#fileForm")[0];
             var formData = new FormData(form);
-            formData.append("file", $("#files")[0].files[0]);
-            
-            $.ajaxSetup({
-                headers: { "X-CSRFToken": '{{csrf_token}}' }
-            });
 
+            for(var i=0;i<_this.length;i++){
+                formData.append("file", _this[i]);
+            }
+            
             $.ajax({
                 type : "POST",
                 enctype: 'multipart/form-data',
                 url : "/inferenceFileUploadAjax/",
+                headers: {"X-CSRFToken": '{{csrf_token}}'},
                 data : formData,
                 processData : false,
                 contentType : false,
-                success : function(data){
-                    self.close();
+                success : function(data){     
+                    modalShow("파일 업로드에 성공했습니다.");
+                    $(".upload-icon, .upload-ment").show(); 
+                    $(".upload-list").hide();
+                    $("#files").val("");
                     opener.location.reload();
                 },
                 error : function(data){
-                    alert("파일 업로드에 실패했습니다.");
+                    modalShow("파일 업로드에 실패했습니다.");
                 }
             });
         }
+
+        function modalShow(msg){
+          $(".modal-body").html(msg);
+          $("#msg_popup").modal("show");
+        }
+
+        function modalHide(){
+          $("#msg_popup").modal("hide");
+        }
+            
     </script>
 </html>
