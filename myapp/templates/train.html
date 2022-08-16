@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block mycontent %}
 
 
-    <input type="hidden" class="pagetitle" value="모델 학습"/>
+    <input type="hidden" class="pagetitle" value="Train"/>
     <input type="hidden" class="pageno" value="2"/>
 
     <div class="row g-3">
@@ -62,26 +63,19 @@
 
     <hr class="my-4">
 
-    <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="insertResult();">Start Training</button>
+    <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="startTraining(this);">Start Training</button>
+
+    <div class="container" style="display:none;">
+        <img src="{% static 'img/tmp/train.png' %}" style="width:100%;height:auto;"/>
+    </div>
 
     <input type="hidden" class="form-control hyperparam" id="modelacc" name="modelacc" value="0.91"/>
     <input type="hidden" class="form-control hyperparam" id="modelf1" name="modelf1" value="0.92"/>
     <input type="hidden" class="form-control hyperparam" id="modelspeed" name="modelspeed" value="23.1"/>
     <input type="hidden" class="form-control hyperparam" id="modelvolume" name="modelvolume" value="48.4"/>
-    <!--
-    결과 : {{skku.result}}
-    device : {{skku.device}}
-    에포크 : {{skku.epochs}}
-    -->
 
     <script>
-
         $(document).ready(function(){
-            $(".trainstart").click(function(){
-                //$(".hyperparam, .trainstart").attr("disabled", true);
-                //$(this).text("Training....");
-            });
-
             $(".hpnum").onkeydown = function(e) {
                 if(!((e.keyCode > 95 && e.keyCode < 106) || (e.keyCode > 47 && e.keyCode < 58) || e.keyCode == 8)) {
                     return false;
@@ -89,7 +83,13 @@
             };
         });
 
-        function insertResult(){
+        function startTraining(_this){
+            $(".hyperparam, .trainstart").attr("disabled", true);
+            $(_this).hide();
+            $(".container").show();
+            modalShow("모델 학습이 성공적으로 완료되었습니다.");
+
+            /*
             if($("#modelname").val() == ""){
                 modalShow("모델 이름을 입력해주세요.");
                 return;
@@ -141,6 +141,7 @@
                     console.log("error :" + e.response);
                 }
             });
+            */
         }
 
     </script>

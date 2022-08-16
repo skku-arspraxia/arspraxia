@@ -2,7 +2,7 @@
 {% block mycontent %}
 
 
-    <input type="hidden" class="pagetitle" value="추론"/>
+    <input type="hidden" class="pagetitle" value="Inference"/>
     <input type="hidden" class="pageno" value="3"/>
 
     <div class="row g-3">
@@ -44,9 +44,230 @@
 
     <hr class="my-4">
 
-    <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="">Start Inference</button>
+    <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="startInference(this);">Start Inference</button>
 
-    <div class="container"></div>
+
+    <!-- 220817 하계발표용 임시저장-->
+    <div class="container" style="display:none;">
+        <button type="button" class="btn btn-primary" name="uploadbutton" style="float:right;margin-bottom: 20px;">데이터 다운로드</button>
+
+        {% if task == 'ner' %}
+            <table class="table table-light table-striped" style="text-align:center;">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">번호</th>
+                        <th style="width:50%;">문장</th>
+                        <th style="width:20%;">토큰</th>
+                        <th style="width:15%;">태그</th>
+                        <th style="width:10%;">사용유무</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for datas in page_obj %}
+                        {% for tag, token in datas.tagtoken %}
+                            {% if forloop.first %}
+                                <tr>                            
+                                    <td rowspan="{{ datas.length }}">
+                                        {{ datas.index | add:startIdx }}
+                                    </td>
+                                    <td rowspan="{{ datas.length }}" style="text-align: left;">
+                                        {{ datas.text }}
+                                    </td>
+                                    <td>
+                                        {{ token }}
+                                    </td>
+                                    <td>
+                                        <select>
+                                            <option {% if tag == 'PER-B' %} selected="selected" {% endif %}>PER-B</option>
+                                            <option {% if tag == 'PER-I' %} selected="selected" {% endif %}>PER-I</option>
+                                            <option {% if tag == 'LOC-B' %} selected="selected" {% endif %}>LOC-B</option>
+                                            <option {% if tag == 'LOC-I' %} selected="selected" {% endif %}>LOC-I</option>
+                                            <option {% if tag == 'ORG-B' %} selected="selected" {% endif %}>ORG-B</option>
+                                            <option {% if tag == 'ORG-I' %} selected="selected" {% endif %}>ORG-I</option>
+                                            <option {% if tag == 'ISSUE-B' %} selected="selected" {% endif %}>ISSUE-B</option>
+                                            <option {% if tag == 'ISSUE-I' %} selected="selected" {% endif %}>ISSUE-I</option>
+                                        </select>
+                                    </td>
+                                    <td rowspan="{{ datas.length }}">
+                                        <input type="checkbox" checked/>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>                            
+                                    <td>
+                                        {{ token }}              
+                                    </td>
+                                    <td>
+                                        <select>
+                                            <option {% if tag == 'PER-B' %} selected="selected" {% endif %}>PER-B</option>
+                                            <option {% if tag == 'PER-I' %} selected="selected" {% endif %}>PER-I</option>
+                                            <option {% if tag == 'LOC-B' %} selected="selected" {% endif %}>LOC-B</option>
+                                            <option {% if tag == 'LOC-I' %} selected="selected" {% endif %}>LOC-I</option>
+                                            <option {% if tag == 'ORG-B' %} selected="selected" {% endif %}>ORG-B</option>
+                                            <option {% if tag == 'ORG-I' %} selected="selected" {% endif %}>ORG-I</option>
+                                            <option {% if tag == 'ISSUE-B' %} selected="selected" {% endif %}>ISSUE-B</option>
+                                            <option {% if tag == 'ISSUE-I' %} selected="selected" {% endif %}>ISSUE-I</option>
+                                            <option {% if tag == 'O' %} selected="selected" {% endif %}>O</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <div id="paging" style="display:none;">
+            <ul class="pagination justify-content-center" style="margin-top: 2rem;">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="/inference/?task={{task}}&page={{page_obj.previous_page_number}}">이전</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+                    </li>
+                {% endif %}
+                {% for page_number in page_range %}
+                    {% if page_number == page_obj.number %}
+                        <li class="page-item active" aria-current="page">
+                            <a class="page-link" href="/inference/?task={{task}}&page={{page_number}}">{{ page_number }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="/inference/?task={{task}}&page={{page_number}}">{{ page_number }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="/inference/?task={{task}}&page={{page_obj.next_page_number}}">다음</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% elif task == 'sa' %}
+            <table class="table table-light table-striped" style="text-align:center;">
+                <thead>
+                    <!--
+                    <tr>
+                        <th style="width:5%;"></th>
+                        <th style="width:60%;"></th>
+                        <th style="width:15%;"></th>
+                        <th style="width:10%;">
+                            <select name="filter1" class="filter1" style="float: left;width: 30%;height: 25px;">
+                                <option value=">" {% if filter1 == '>' %} selected="selected" {% endif %}>></option>
+                                <option value=">=" {% if filter1 == '>=' %} selected="selected" {% endif %}>>=</option>
+                                <option value="<=" {% if filter1 == '<=' %} selected="selected" {% endif %}><=</option>
+                                <option value="<" {% if filter1 == '<' %} selected="selected" {% endif %}><</option>
+                            </select>
+                            <input type="text" name="filter2" class="filter2" style="float: left;width: 70%;height: 25px;" value="{{ filter2 }}"/>
+                        </th>
+                        <th style="width:10%;">
+                            <button type="button" class="btn btn-secondary" name="uploadbutton" onclick="searchForm();">검색</button>
+                        </th>
+                    </tr>
+                -->
+                    <tr>
+                        <th style="width:5%;">번호</th>
+                        <th style="width:60%;">문장</th>
+                        <th style="width:15%;">분류</th>
+                        <th style="width:10%;">정확도</th>
+                        <th style="width:10%;">사용유무</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page_obj %}
+                        <tr>
+                            <td>{{ forloop.counter | add:startIdx }}</td>
+                            <td style="text-align: left;">{{ data.text }}</td>
+                            {% if data.classification == '긍정' %}
+                                <td>
+                                    <input type="radio" value="긍정" id="cPosi{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}" checked/><label for="cPosi{{ forloop.counter | add:startIdx }}">긍정</label>
+                                    <input type="radio" value="중립" id="cNeu{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}"/>        <label for="cNeu{{ forloop.counter | add:startIdx }}">중립</label>
+                                    <input type="radio" value="부정" id="cNega{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}"/>        <label for="cNega{{ forloop.counter | add:startIdx }}">부정</label>
+                                </td>
+                            {% elif data.classification == '중립' %}
+                                <td>
+                                    <input type="radio" value="긍정" id="cPosi{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}" />         <label for="cPosi{{ forloop.counter | add:startIdx }}">긍정</label>
+                                    <input type="radio" value="중립" id="cNeu{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}"  checked/> <label for="cNeu{{ forloop.counter | add:startIdx }}">중립</label>
+                                    <input type="radio" value="부정" id="cNega{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}" />         <label for="cNega{{ forloop.counter | add:startIdx }}">부정</label>
+                                </td>
+                            {% elif data.classification == '부정' %}
+                                <td>
+                                    <input type="radio" value="긍정" id="cPosi{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}" />         <label for="cPosi{{ forloop.counter | add:startIdx }}">긍정</label>
+                                    <input type="radio" value="중립" id="cNeu{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}" />         <label for="cNeu{{ forloop.counter | add:startIdx }}">중립</label>
+                                    <input type="radio" value="부정" id="cNega{{ forloop.counter | add:startIdx }}" name="cRadio{{ forloop.counter | add:startIdx }}"  checked/> <label for="cNega{{ forloop.counter | add:startIdx }}">부정</label>
+                                </td>
+                            {% endif %}
+                            <td>{{ data.score }}</td>
+                            <td><input type="checkbox" checked/></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <div id="paging" style="display:none;">
+            <ul class="pagination justify-content-center" style="margin-top: 2rem;">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <!--<a class="page-link" href="/inference/?task={{task}}&page={{page_obj.previous_page_number}}&filter1={{filter1}}&filter2={{filter2}}">이전</a>-->
+                        <a class="page-link" href="/inference/?task={{task}}&page={{page_obj.previous_page_number}}">이전</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" tabindex="-1" aria-disabled="true" href="#">이전</a>
+                    </li>
+                {% endif %}
+                {% for page_number in page_range %}
+                    {% if page_number == page_obj.number %}
+                        <li class="page-item active" aria-current="page">
+                            <a class="page-link" href="/inference/?task={{task}}&page={{page_number}}">{{ page_number }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="/inference/?task={{task}}&page={{page_number}}">{{ page_number }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="/inference/?task={{task}}&page={{page_obj.next_page_number}}">다음</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" tabindex="-1" aria-disabled="true" href="#">다음</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+    <script>
+        function startInference(_this){
+            $(_this).hide();
+            $(".container, #paging").show();
+        }
+
+        function searchForm(){
+            //$(".searchForm").submit();
+            location.href = "/inference/?task={{task}}&page=1&filter1="+$(".filter1").val()+"&filter2="+$(".filter2").val();
+        }
+
+        $(document).ready(function(){
+            //if(parseInt('{{page}}') > 1 || '{{filter1}}' == ">" || '{{filter1}}' == ">=" || '{{filter1}}' == "<" || '{{filter1}}' == "<="){
+            if(parseInt('{{page}}') > 1){
+                $(".trainstart").hide();
+                $(".container, #paging").show();
+            }
+        });
+    </script>
 
     <style>
         .label-data{
@@ -57,6 +278,10 @@
             position: absolute;
             right: 0;
             cursor:pointer;
+        }
+        .container{
+            max-width: 100%;
+            text-align: center;
         }
     </style>
     

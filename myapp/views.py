@@ -64,7 +64,7 @@ def data(request):
             filesrc = my_bucket_object.key.split('.')
             # 파일 여부 확인
             if len(filesrc) > 1:
-                if filesrc[1] == "tsv" or filesrc[1] == "csv":
+                if filesrc[1] == "tsv" or filesrc[1] == "csv" or filesrc[1] == "xls" or filesrc[1] == "xlsx":
                     filepath = filesrc[0].split("/")
                     if len(filepath) == 4:
                         if filepath[0] == "data":
@@ -100,7 +100,10 @@ def data(request):
                 try:
                     df = pd.read_csv(datapath, encoding="utf-8") 
                 except:   
-                    df = pd.read_csv(datapath, encoding="cp949")      
+                    df = pd.read_csv(datapath, encoding="cp949")    
+                     
+            elif fileExtention == "xls" or fileExtention == "xlsx":
+                    df = pd.read_excel(datapath)   
 
             board_list = []
             for obj in df.values.tolist():
@@ -186,7 +189,7 @@ def train(request):
         for my_bucket_object in my_bucket.objects.all():
             filesrc = my_bucket_object.key.split('.')
             if len(filesrc) > 1:
-                if filesrc[1] == "tsv" or filesrc[1] == "csv":
+                if filesrc[1] == "tsv" or filesrc[1] == "csv" or filesrc[1] == "xls" or filesrc[1] == "xlsx":
                     filepath = filesrc[0].split("/")
                     if len(filepath) == 4:
                         if filepath[0] == "data":
@@ -246,7 +249,7 @@ def inference(request):
         for my_bucket_object in my_bucket.objects.all():
             filesrc = my_bucket_object.key.split('.')
             if len(filesrc) > 1:
-                if filesrc[1] == "tsv" or filesrc[1] == "csv":
+                if filesrc[1] == "tsv" or filesrc[1] == "csv" or filesrc[1] == "xls" or filesrc[1] == "xlsx":
                     filepath = filesrc[0].split("/")
                     if len(filepath) == 4:
                         if filepath[0] == "data":
@@ -263,6 +266,80 @@ def inference(request):
                 "datalist" : datalist,
                 "inference_model" : NLP_models.objects.filter(model_task=request.GET["task"])
         }
+
+        # 220817 하계발표용 임시저장
+        datapath = ''
+        datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
+
+        if request.GET["task"] == "ner":
+            data_src = "data/" + request.GET.get("task") + "/result/" + quote("개체명인식결과.csv")
+        elif request.GET["task"] == "sa":
+            data_src = "data/" + request.GET.get("task") + "/result/" + quote("감성분석결과.csv")
+
+        datapath = datapath_url + data_src
+
+        try:
+            df = pd.read_csv(datapath, encoding="utf-8") 
+        except:   
+            df = pd.read_csv(datapath, encoding="cp949")    
+
+        board_list = []
+
+        """
+        filter1 = request.GET.get("filter1")
+        filter2 = request.GET.get("filter2")
+        """
+        objIndex = 1
+        for obj in df.values.tolist():        
+            if request.GET["task"] == "ner":
+                board_list.append({'text':obj[0], 'tagtoken':zip(obj[1].split(" "), obj[0].split(" ")), 'length':len(obj[1].split(" ")), 'index':objIndex })
+                objIndex += 1
+            elif request.GET["task"] == "sa":
+                board_list.append({'text':obj[0], 'classification':obj[1], 'score':obj[2]})
+
+                """
+                if filter2:
+                    if filter1 == ">":
+                        if obj[2] > float(filter2):
+                            board_list.append({'text':obj[0], 'classification':obj[1], 'score':obj[2]})
+                    elif filter1 == ">=":
+                        if obj[2] >= float(filter2):
+                            board_list.append({'text':obj[0], 'classification':obj[1], 'score':obj[2]})
+                    elif filter1 == "<":
+                        if obj[2] < float(filter2):
+                            board_list.append({'text':obj[0], 'classification':obj[1], 'score':obj[2]})
+                    elif filter1 == "<=":
+                        if obj[2] <= float(filter2):
+                            board_list.append({'text':obj[0], 'classification':obj[1], 'score':obj[2]})
+                else:
+                    board_list.append({'text':obj[0], 'classification':obj[1], 'score':obj[2]})
+                """
+
+            
+        page = request.GET.get('page', '1')
+        paginator = Paginator(board_list, '10')
+        page_obj = paginator.page(page)   
+
+        page_numbers_range = 10
+        max = len(paginator.page_range)
+        current_page = int(page) if page else 1
+
+        start = int((current_page - 1) / page_numbers_range) * page_numbers_range
+        end = start + page_numbers_range
+        if end >= max:
+                end = max
+
+        startIdx = int(page_obj.paginator.per_page) * (int(page) - 1)
+
+        context['page_obj'] = page_obj
+        context['page_range'] = paginator.page_range[start:end]
+        context['startIdx'] = startIdx 
+        context['page'] = page
+        """
+        context['filter1'] = filter1
+        context['filter2'] = filter2
+        """
+        # 여기까지
 
         return render(request, 'inference.html', context)
 
