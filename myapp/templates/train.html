@@ -41,11 +41,11 @@
         </div>
         <div class="col-md-12">
             <label for="dataSrc" class="form-label">Data Set</label>
-            {% if csvlist %}
+            {% if datalist %}
                 <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
                     <option hidden="" value="0">데이터를 선택해주세요</option>
-                        {% for csv in csvlist %}
-                            <option value="{{forloop.counter}}">{{ csv }}</option>
+                        {% for data in datalist %}
+                            <option value="{{forloop.counter}}">{{ data }}</option>
                         {% endfor %}    
                 </select>            
             {% else %}

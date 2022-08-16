@@ -109,7 +109,7 @@
                         <input type="hidden" id="task" name="task" value="{{task}}"/>
                         <img src="{% static 'img/upload.png' %}" class="upload-icon" id = fileimg/></br>
                         <span class="upload-ment">파일을 드래그하거나 클릭해주세요.</span>
-                        <input id="files" class="upload-input" type="file" name="files" accept="text/csv" multiple/>
+                        <input id="files" class="upload-input" type="file" name="files" accept="text/csv, text/tsv" multiple/>
                         <div class="upload-list"></div>
                     </div>
                     <div>
@@ -123,21 +123,27 @@
     <script>
         $(document).ready(function(){
             $("#files").change(function(){
-                $(".upload-icon, .upload-ment").hide(); 
-                $(".upload-list").show(); 
-
                 var _this = $("#files").get(0).files;
-                for(var i=0;i<_this.length;i++){
-                    var appendHTML = "";
-                    appendHTML += "<p>";
-                    appendHTML += _this[i].name;
-                    appendHTML += "<span data-feather='folder' class='align-text-bottom'></span>";
-                    appendHTML += "</p>";
 
-                    $(".upload-list").append(appendHTML);
+                if(_this.length > 0){
+                    var appendHTML = "";
+                
+                    for(var i=0;i<_this.length;i++){
+                        appendHTML += "<p>";
+                        appendHTML += _this[i].name;
+                        appendHTML += "<span data-feather='folder' class='align-text-bottom'></span>";
+                        appendHTML += "</p>";
+                    }
+                    $(".upload-list").html(appendHTML);
+
+                    $(".upload-icon, .upload-ment").hide(); 
+                    $(".upload-list").show();
+                }
+                else{
+                    $(".upload-icon, .upload-ment").show(); 
+                    $(".upload-list").hide();
                 }
             });
-
         });
         
         function fileUpload(){

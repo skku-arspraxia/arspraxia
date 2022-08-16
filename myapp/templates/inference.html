@@ -11,11 +11,11 @@
                 Data Set
                 <a class="a-dataUpload" onclick="window.open('/inferenceUpload/?task={{task}}','','width=400,height=400;');">[데이터 업로드]</a>
             </label>
-            {% if csvlist %}
+            {% if datalist %}
                 <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
                     <option hidden="" value="0">데이터를 선택해주세요</option>
-                        {% for csv in csvlist %}
-                            <option value="{{forloop.counter}}">{{ csv }}</option>
+                        {% for data in datalist %}
+                            <option value="{{forloop.counter}}">{{ data }}</option>
                         {% endfor %}
                 </select>
             {% else %}

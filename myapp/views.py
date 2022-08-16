@@ -58,41 +58,53 @@ def data(request):
                 aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
         )
 
-        csvlist = []
+        datalist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
             filesrc = my_bucket_object.key.split('.')
+            # 파일 여부 확인
             if len(filesrc) > 1:
-                if filesrc[1] == "csv":
+                if filesrc[1] == "tsv" or filesrc[1] == "csv":
                     filepath = filesrc[0].split("/")
-                    filetask = filepath[1]
-                    filetype = filepath[2]
-                    filename = filepath[3]
+                    if len(filepath) == 4:
+                        if filepath[0] == "data":
+                            filetask = filepath[1]
+                            filetype = filepath[2]
+                            filename = filepath[3]
 
-                    if filetask == request.GET.get("task"):
-                        if filetype == "train":
-                            csvlist.append(filename + "." + filesrc[1])
-    
+                            if filetask == request.GET.get("task"):
+                                if filetype == "train":
+                                    datalist.append(filename + "." + filesrc[1])
+
         context = {
             "task" : request.GET.get("task"),
-            "csvlist" : csvlist
+            "datalist" : datalist
         }
 
+        # 파일 조회 일 경우
         if request.GET.get("fileName"):
             datapath = ''
             datapath_url = 'https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/'
             data_src = "data/" + request.GET.get("task") + "/train/" + quote(request.GET.get("fileName"))
             datapath = datapath_url + data_src
-            print(datapath)
 
-            try:
-                df = pd.read_csv(datapath, encoding="utf-8") 
-            except:   
-                df = pd.read_csv(datapath, encoding="cp949")       
+            fileExtention = request.GET.get("fileName").split(".")[1]
+
+            if fileExtention == "tsv":
+                try:
+                    df = pd.read_csv(datapath, encoding="utf-8", delimiter='\t') 
+                except:   
+                    df = pd.read_csv(datapath, encoding="cp949", delimiter='\t')   
+
+            elif fileExtention == "csv": 
+                try:
+                    df = pd.read_csv(datapath, encoding="utf-8") 
+                except:   
+                    df = pd.read_csv(datapath, encoding="cp949")      
 
             board_list = []
             for obj in df.values.tolist():
-                board_list.append({'text':obj[0], 'sentiment':obj[1]})
+                board_list.append({'text':obj[0], 'classification':obj[1]})
                 
             page = request.GET.get('page', '1')
             paginator = Paginator(board_list, '30')
@@ -169,24 +181,26 @@ def train(request):
                 aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
         )
 
-        csvlist = []
+        datalist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
             filesrc = my_bucket_object.key.split('.')
             if len(filesrc) > 1:
-                if filesrc[1] == "csv":
+                if filesrc[1] == "tsv" or filesrc[1] == "csv":
                     filepath = filesrc[0].split("/")
-                    filetask = filepath[1]
-                    filetype = filepath[2]
-                    filename = filepath[3]
+                    if len(filepath) == 4:
+                        if filepath[0] == "data":
+                            filetask = filepath[1]
+                            filetype = filepath[2]
+                            filename = filepath[3]
 
-                    if filetask == request.GET["task"]:
-                        if filetype == "train":
-                            csvlist.append(filename + "." + filesrc[1])
+                            if filetask == request.GET["task"]:
+                                if filetype == "train":
+                                    datalist.append(filename + "." + filesrc[1])
                                 
         context = {
                 "task" : request.GET["task"],
-                "csvlist" : csvlist,
+                "datalist" : datalist,
                 "inference_model" : NLP_models.objects.filter(model_task=request.GET["task"])
         }        
 
@@ -226,25 +240,27 @@ def inference(request):
                 aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
         )
-                
-        csvlist = []
+
+        datalist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
         for my_bucket_object in my_bucket.objects.all():
             filesrc = my_bucket_object.key.split('.')
             if len(filesrc) > 1:
-                if filesrc[1] == "csv":
+                if filesrc[1] == "tsv" or filesrc[1] == "csv":
                     filepath = filesrc[0].split("/")
-                    filetask = filepath[1]
-                    filetype = filepath[2]
-                    filename = filepath[3]
+                    if len(filepath) == 4:
+                        if filepath[0] == "data":
+                            filetask = filepath[1]
+                            filetype = filepath[2]
+                            filename = filepath[3]
 
-                    if filetask == request.GET["task"]:
-                        if filetype == "inf":
-                            csvlist.append(filename + "." + filesrc[1])
+                            if filetask == request.GET["task"]:
+                                if filetype == "inf":
+                                    datalist.append(filename + "." + filesrc[1])
 
         context = {
                 "task" : request.GET["task"],
-                "csvlist" : csvlist,
+                "datalist" : datalist,
                 "inference_model" : NLP_models.objects.filter(model_task=request.GET["task"])
         }
 

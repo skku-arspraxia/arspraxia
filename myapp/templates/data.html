@@ -17,11 +17,11 @@
                 Data Set
                 <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=400,height=400');">[데이터 업로드]</a>
             </label>
-            {% if csvlist %}
+            {% if datalist %}
                 <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
                     <option hidden="" value="0">데이터를 선택해주세요</option>
-                        {% for csv in csvlist %}
-                            <option value="{{forloop.counter}}">{{ csv }}</option>
+                        {% for data in datalist %}
+                            <option value="{{forloop.counter}}">{{ data }}</option>
                         {% endfor %}    
                 </select>            
             {% else %}
@@ -39,9 +39,14 @@
             <table class="table table-light table-striped" style="text-align:center;">
                 <thead>
                     <tr>
-                        <th style="width:5%;">번호</th>
-                        <th style="width:45%;">문장</th>
-                        <th style="width:10%;">결과</th>
+                        <th style="width:10%;">번호</th>
+                        {% if task == 'ner'%}
+                            <th style="width:60%;">문장</th>
+                            <th style="width:30%;">분류</th>
+                        {% elif task == 'sa' %}
+                            <th style="width:75%;">문장</th>
+                            <th style="width:15%;">분류</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -49,7 +54,11 @@
                         <tr>
                             <td>{{ forloop.counter | add:startIdx }}</td>
                             <td>{{ data.text }}</td>
-                            <td>{{ data.sentiment }}</td>
+                            {% if task == 'ner'%}
+                                <td style="text-align:left;">{{ data.classification }}</td>
+                            {% elif task == 'sa' %}
+                                <td>{{ data.classification }}</td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>
