@@ -109,7 +109,7 @@
                         <input type="hidden" id="task" name="task" value="{{task}}"/>
                         <img src="{% static 'img/upload.png' %}" class="upload-icon" id = fileimg/></br>
                         <span class="upload-ment">파일을 드래그하거나 클릭해주세요.</span>
-                        <input id="files" class="upload-input" type="file" name="files" accept="text/csv, text/tsv" multiple/>
+                        <input id="files" class="upload-input" type="file" name="files" accept=".csv, .tsv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" multiple/>
                         <div class="upload-list"></div>
                     </div>
                     <div>
