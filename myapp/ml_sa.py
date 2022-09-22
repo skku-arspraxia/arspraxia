@@ -31,6 +31,7 @@ class SKKU_SENTIMENT:
         # Model
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print("@@@1")
+        print(self.device)
         self.model = AutoModelForSequenceClassification.from_pretrained(self.args.pretrained_model, num_labels=self.args.num_labels).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
         """
@@ -208,6 +209,6 @@ class SentimentReviewDataset(Dataset):
 
 
 def loadJSON():
-    with open('config.json') as f:
+    with open('./config/config.json') as f:
         args = AttrDict(json.load(f))	
     return args
