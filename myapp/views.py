@@ -13,9 +13,7 @@ from django.core.paginator import Paginator
 from django.db import connection
 from .models import NLP_models
 
-
-#from myapp.ml_sa import SKKU_SENTIMENT
-from myapp.sa_test import SKKU_SENTIMENT
+from myapp.ml_sa import SKKU_SENTIMENT
 
 @csrf_exempt
 def login(request):
@@ -369,7 +367,7 @@ def inferenceSA(request):
 
         context = {
                 "task" : request.GET["task"],
-                #"result_json" : result_json
+                "result_json" : result
         }
 
         return render(request, 'inferenceSA.html', context)
