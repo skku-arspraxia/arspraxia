@@ -22,17 +22,16 @@ class SKKU_SENTIMENT:
     def __init__(self, dicname="samodel", dotrain = 1):
         self.args = loadJSON()
 
-        if dotrain == 0:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
-            self.model = AutoModelForSequenceClassification.from_pretrained(f"./samodels/"+dicname)
-            self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, device=0)
-            return
+        #if dotrain == 0:
+        #    self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
+        #    self.model = AutoModelForSequenceClassification.from_pretrained(f"./model/")
+        #    self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, device=0)
+        #    return
 
         # Model
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print("@@@1")
-        print(self.device)
-        self.model = AutoModelForSequenceClassification.from_pretrained(self.args.pretrained_model, num_labels=self.args.num_labels).to(self.device)
+        self.model = AutoModelForSequenceClassification.from_pretrained(f"./model/")
+        #self.model = AutoModelForSequenceClassification.from_pretrained(self.args.pretrained_model, num_labels=self.args.num_labels).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
         """
         # Dataset
@@ -61,6 +60,9 @@ class SKKU_SENTIMENT:
         """
         # Classifier
         self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, function_to_apply=self.args.function_to_apply, device=0)
+        
+        print("@@@1")
+        print(self.device)
 
         
     def train(self):
