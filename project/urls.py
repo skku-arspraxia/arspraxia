@@ -9,6 +9,7 @@ urlpatterns = [
     path('data/', views.data),
     path('dataUpload/', views.dataUpload),
     path('dataFileUploadAjax/', views.dataFileUploadAjax),
+    path('dataDownloadAjax/', views.dataDownloadAjax),
     path('train/', views.train),
     path('trainInsertAjax/', views.trainInsertAjax),
     path('inference/', views.inference),
@@ -16,5 +17,8 @@ urlpatterns = [
     path('inferenceFileUploadAjax/', views.inferenceFileUploadAjax),
     path('inferenceSA/', views.inferenceSA),
     path('models/', views.models, name='models'),
-    path('modelPopup/',views.modelPopup),
+    path('modelPopup/', views.modelPopup),
+
+    path('tempmodeldown/', views.tempmodeldown),
+    path('tempinference/', views.tempinference)
 ]
