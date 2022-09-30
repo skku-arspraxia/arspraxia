@@ -5,6 +5,8 @@ import torch
 import numpy as np
 import pandas as pd
 import os
+import boto3
+import project.settings
 from attrdict import AttrDict
 from tqdm.notebook import tqdm
 from torch.nn import functional as F
@@ -30,9 +32,12 @@ class SKKU_SENTIMENT:
 
         # Model
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = AutoModelForSequenceClassification.from_pretrained(f"./model/")
-        #self.model = AutoModelForSequenceClassification.from_pretrained(self.args.pretrained_model, num_labels=self.args.num_labels).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
+        self.model = AutoModelForSequenceClassification.from_pretrained('C:/arspraxiabucket/model/1/')
+        #self.model = AutoModelForSequenceClassification.from_pretrained('https://arspraxiabucket.s3.ap-northeast-2.amazonaws.com/model/1/')
+        #self.model = AutoModelForSequenceClassification.from_pretrained('https://s3.ap-northeast-2.amazonaws.com/arspraxiabucket/model/1/')
+        #self.model = AutoModelForSequenceClassification.from_pretrained(f"./model/")
+        #self.model = AutoModelForSequenceClassification.from_pretrained(self.args.pretrained_model, num_labels=self.args.num_labels).to(self.device)
         """
         # Dataset
         self.data_path = self.args.data_path

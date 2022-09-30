@@ -7,8 +7,8 @@
     <input type="hidden" class="pageno" value="1"/>
     
     <form action="/data/" method="GET" class="dataform">
-        <input type="hidden" name="task" value="{{task}}"/>
-        <input type="hidden" name="fileName" class="fileName" value=""/>
+        <input type="hidden" name="task" class="task" value="{{task}}"/>
+        <input type="hidden" name="fileName" class="fileName" value="{{fileName}}"/>
     </form>
 
     <div class="row g-3">
@@ -36,6 +36,7 @@
 
     {% if page_obj %}
         <div class="container">
+            <button type="button" class="btn btn-primary" name="uploadbutton" style="float:right;margin-bottom: 20px;" onclick="download();">데이터 다운로드</button>
             <table class="table table-light table-striped" style="text-align:center;">
                 <thead>
                     <tr>
@@ -106,6 +107,28 @@
                 $(".hyperparam").attr("disabled", true); 
                 $(".dataform").submit();
             }
+        }
+
+        function download(){
+            var param = {
+                'task' : $(".task").val(),
+                'fileName' : $(".fileName").val()
+            }
+            $.ajax({
+                type : "POST",
+                enctype: 'multipart/form-data',
+                url : "/dataDownloadAjax/",
+                headers: {"X-CSRFToken": '{{csrf_token}}'},
+                data : JSON.stringify(param),
+                processData : false,
+                contentType : false,
+                success : function(data){     
+                    modalShow("파일 다운로드에 성공했습니다.");
+                },
+                error : function(data){
+                    modalShow("파일 다운로드에 실패했습니다.");
+                }
+            });
         }
 
         $(document).ready(function(){

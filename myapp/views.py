@@ -172,6 +172,38 @@ def dataFileUploadAjax(request):
         return JsonResponse(context)
 
 
+@csrf_exempt
+def dataDownloadAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        jsonObj = json.loads(request.body)
+        task = jsonObj.get('task', False)
+        fileName = jsonObj.get('fileName', False)
+        filePath = 'data/'+task+'/train/'
+        fileSrc = filePath+fileName
+        
+        localrootPath = "C:/arspraxiabucket/"
+        localfilePath = localrootPath+filePath
+        localfileSrc = localfilePath+fileName
+        if not os.path.exists(localfilePath):
+           os.makedirs(localfilePath)
+        
+        s3c = boto3.client(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+
+        s3c.download_file('arspraxiabucket', fileSrc, localfileSrc)
+
+        context = {
+                "result" : "success"
+        }
+
+        return JsonResponse(context)
+
+
 def train(request):
         if logincheck(request):
                 return redirect('/login/')
@@ -357,20 +389,7 @@ def inferenceSA(request):
         if logincheck(request):
                 return redirect('/login/')
 
-        skku_sa = SKKU_SENTIMENT()
-
-        sentence = "류도현 존나 잘생김"
-        result = skku_sa(sentence)
-        print("@@@@"+result)
-
-        # 결과 json으로
-
-        context = {
-                "task" : request.GET["task"],
-                "result_json" : result
-        }
-
-        return render(request, 'inferenceSA.html', context)
+        return render(request, 'inferenceSA.html')
 
 
 def inferenceNER(request):
@@ -470,13 +489,64 @@ def logincheck(request):
                 return True
 
 
+@csrf_exempt
+def tempmodeldown(request):
+        if logincheck(request):
+                return redirect('/login/')
+        
+        s3c = boto3.client(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
 
-"""
-# 다운로드
-prefix = '/sa'
-for object in bucket.objects.filter(Prefix = '/sa'):
-        if object.key == prefix:
-                os.makedirs(os.path.dirname(object.key), exist_ok=True)
-                continue;
-        bucket.download_file(object.key, object.key)
-"""
+        s3r = boto3.resource(
+                's3',
+                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+        )
+
+        localrootPath = "C:/arspraxiabucket/"
+
+        modelsrcList = []
+        my_bucket = s3r.Bucket('arspraxiabucket')
+        for my_bucket_object in my_bucket.objects.all():
+            filesrc = my_bucket_object.key.split('.')
+            
+            if not os.path.exists(localrootPath+'model/1/'):
+                os.makedirs(localrootPath+'model/1/')
+
+            # 파일 여부 확인
+            if len(filesrc) > 1:
+                filepath = filesrc[0].split("/")
+                if filepath[0] == "model":
+                    modelsrcList.append(filesrc[0] + "." + filesrc[1])
+
+        for modelsrc in modelsrcList:
+            s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)
+
+        context = {
+                "result" : "success"
+        }
+
+        return JsonResponse(context)
+
+
+@csrf_exempt
+def tempinference(request):
+    if logincheck(request):
+            return redirect('/login/')
+
+    skku_sa = SKKU_SENTIMENT()
+
+    sentence = "류도현 존나 잘생김"
+    result = skku_sa(sentence)
+    print("@@@@"+result)
+
+    context = {
+        "result" : result
+    }
+
+    return JsonResponse(context)
+
+    
