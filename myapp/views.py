@@ -4,6 +4,7 @@ import project.settings
 import pandas as pd
 import json
 import chardet
+import shutil
 
 from urllib.parse import quote
 from django.shortcuts import render, redirect
@@ -537,11 +538,46 @@ def tempinference(request):
     if logincheck(request):
             return redirect('/login/')
 
+    s3c = boto3.client(
+            's3',
+            aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+    )
+
+    s3r = boto3.resource(
+            's3',
+            aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+    )
+
+    localrootPath = "C:/arspraxiabucket/"
+
+    modelsrcList = []
+    my_bucket = s3r.Bucket('arspraxiabucket')
+    for my_bucket_object in my_bucket.objects.all():
+        filesrc = my_bucket_object.key.split('.')
+        
+        if not os.path.exists(localrootPath+'model/1/'):
+            os.makedirs(localrootPath+'model/1/')
+
+        # 파일 여부 확인
+        if len(filesrc) > 1:
+            filepath = filesrc[0].split("/")
+            if filepath[0] == "model":
+                modelsrcList.append(filesrc[0] + "." + filesrc[1])
+
+    for modelsrc in modelsrcList:
+        s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)
+
+
     skku_sa = SKKU_SENTIMENT()
 
     sentence = "류도현 존나 잘생김"
     result = skku_sa(sentence)
     print("@@@@"+result)
+
+    # 받은 임시 모델파일 삭제
+    shutil.rmtree(localrootPath+'model/1')
 
     context = {
         "result" : result
