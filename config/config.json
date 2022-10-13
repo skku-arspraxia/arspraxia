@@ -17,8 +17,8 @@
 	"LABEL_2" : "긍정"
   },
   "function_to_apply" : "softmax",
-  "pretrained_model" : "jinwooChoi/SKKU_SENTIMENT",
-  "trained_model" : "jinwooChoi/SKKU_SENTIMENT",
+  "pretrained_model" : "jinwooChoi/SKKU_SENTIMENT_AUG",
+  "trained_model" : "jinwooChoi/SKKU_SENTIMENT_AUG",
   "huggingface_token" : "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",
   "data_path" : "./data/문어체 감성 변환본.csv",
   "num_labels" : 3,

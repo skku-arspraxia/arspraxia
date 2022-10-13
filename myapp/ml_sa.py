@@ -216,6 +216,6 @@ class SentimentReviewDataset(Dataset):
 
 
 def loadJSON():
-    with open('./config/config.json') as f:
+    with open('./config/config.json', encoding="UTF-8") as f:
         args = AttrDict(json.load(f))	
     return args
