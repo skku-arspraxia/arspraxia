@@ -3,7 +3,6 @@ import boto3
 import project.settings
 import pandas as pd
 import json
-import chardet
 import shutil
 
 from urllib.parse import quote
