@@ -13,7 +13,7 @@ from django.core.paginator import Paginator
 from django.db import connection
 from .models import NLP_models
 
-from myapp.ml_sa import SKKU_SENTIMENT
+from myapp.skku_sa import SKKU_SENTIMENT
 
 @csrf_exempt
 def login(request):
@@ -568,14 +568,24 @@ def tempinference(request):
     for modelsrc in modelsrcList:
         s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)
 
+    # inf할 데이터 없으면 다운받는 로직도 구현해야함
 
     skku_sa = SKKU_SENTIMENT()
+    skku_sa.setAttr("C:/arspraxiabucket/data/sa/inf/감성분석추론.csv", "modelpath")
+    skku_sa.inference()
 
+    #20221029
+    #inf_result_list = skku_sa.getInfResult()
+    #inf_result_list 를 csv로 저장 // 여기까지 해주세요
+    #inf_result_list 를 html로 파싱
+
+    result = ""
+    """
     sentence = "테스트가 잘됐으면 좋겠습니다."
     result = skku_sa(sentence)
     print("샘플 문장 : "+sentence)
     print("샘플 결과 : "+result)
-
+    """
     # 받은 임시 모델파일 삭제
     shutil.rmtree(localrootPath+'model/1')
 
