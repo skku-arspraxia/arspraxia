@@ -571,9 +571,10 @@ def tempinference(request):
 
     skku_sa = SKKU_SENTIMENT()
 
-    sentence = "류도현 존나 잘생김"
+    sentence = "테스트가 잘됐으면 좋겠습니다."
     result = skku_sa(sentence)
-    print("@@@@"+result)
+    print("샘플 문장 : "+sentence)
+    print("샘플 결과 : "+result)
 
     # 받은 임시 모델파일 삭제
     shutil.rmtree(localrootPath+'model/1')
