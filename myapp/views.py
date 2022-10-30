@@ -4,6 +4,7 @@ import project.settings
 import pandas as pd
 import json
 import shutil
+import csv
 
 from urllib.parse import quote
 from django.shortcuts import render, redirect
@@ -12,8 +13,23 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db import connection
 from .models import NLP_models
+from datetime import datetime
 
 from myapp.skku_sa import SKKU_SENTIMENT
+from myapp.skku_sa_gpuoff import SKKU_SENTIMENT as SKKU_SENTIMENT_TEMP
+#from myapp.skku_sa_gpuon import SKKU_SENTIMENT as SKKU_SENTIMENT_TEMP
+
+s3r = boto3.resource(
+        's3',
+        aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+)
+
+s3c = boto3.client(
+        's3',
+        aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
+)
 
 @csrf_exempt
 def login(request):
@@ -49,12 +65,6 @@ def logout(request):
 def data(request):
         if logincheck(request):
                 return redirect('/login/')
-
-        s3r = boto3.resource(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
 
         datalist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
@@ -146,12 +156,6 @@ def dataFileUploadAjax(request):
         if logincheck(request):
                 return redirect('/login/')
 
-        s3c = boto3.client(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
-
         filelist = request.FILES.getlist('file')
 
         for file in filelist:
@@ -188,12 +192,6 @@ def dataDownloadAjax(request):
         localfileSrc = localfilePath+fileName
         if not os.path.exists(localfilePath):
            os.makedirs(localfilePath)
-        
-        s3c = boto3.client(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
 
         s3c.download_file('arspraxiabucket', fileSrc, localfileSrc)
 
@@ -207,12 +205,6 @@ def dataDownloadAjax(request):
 def train(request):
         if logincheck(request):
                 return redirect('/login/')
-
-        s3r = boto3.resource(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
 
         datalist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
@@ -240,22 +232,35 @@ def train(request):
         return render(request, 'train.html', context)
         
 
-def trainInsertAjax(request):
+def trainStartAjax(request):
         if logincheck(request):
                 return redirect('/login/')
+                
+        params = {
+            'pretrained_model' : request.GET["pretrained"],
+            'train_data' : request.GET["dataSrc"],
+            'modelepoch' : request.GET["modelepoch"],
+            'modelbs' : request.GET["modelbs"],
+            'modellr' : request.GET["modellr"],
+        }
 
-        trainInsertAjax = NLP_models()
-        trainInsertAjax.model_task = request.GET["task"]
-        trainInsertAjax.model_name = request.GET["modelname"]
-        trainInsertAjax.epoch = request.GET["modelepoch"]
-        trainInsertAjax.learning_rate = request.GET["modellr"]
-        trainInsertAjax.batch_size = request.GET["modelbs"]
-        trainInsertAjax.description = request.GET["modeldes"]
-        trainInsertAjax.accuracy = request.GET["modelacc"]
-        trainInsertAjax.f1 = request.GET["modelf1"]
-        trainInsertAjax.speed = request.GET["modelspeed"]
-        trainInsertAjax.volume = request.GET["modelvolume"]
-        trainInsertAjax.save()
+        skku_sa = SKKU_SENTIMENT_TEMP()
+        skku_sa.setTrainAttr(params)
+        skku_sa.train()
+
+        # DB 저장
+        trainStartAjax = NLP_models()
+        trainStartAjax.model_task = request.GET["task"]
+        trainStartAjax.model_name = request.GET["modelname"]
+        trainStartAjax.epoch = request.GET["modelepoch"]
+        trainStartAjax.learning_rate = request.GET["modellr"]
+        trainStartAjax.batch_size = request.GET["modelbs"]
+        trainStartAjax.description = request.GET["modeldes"]
+        trainStartAjax.accuracy = request.GET["modelacc"]
+        trainStartAjax.f1 = request.GET["modelf1"]
+        trainStartAjax.speed = request.GET["modelspeed"]
+        trainStartAjax.volume = request.GET["modelvolume"]
+        trainStartAjax.save()
 
         context = {
                 'result' : 'success'
@@ -267,12 +272,6 @@ def trainInsertAjax(request):
 def inference(request):
         if logincheck(request):
                 return redirect('/login/')
-
-        s3r = boto3.resource(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
 
         datalist = []
         my_bucket = s3r.Bucket('arspraxiabucket')
@@ -383,6 +382,28 @@ def inferenceUpload(request):
         }
 
         return render(request, 'inferenceUpload.html', context)
+      
+
+def inferenceStartAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+                
+        params = {
+            'inference_data' : request.GET["dataSrc"],
+            'inference_model' : request.GET["inference_model"],
+        }
+
+        skku_sa = SKKU_SENTIMENT_TEMP()
+        skku_sa.setInferenceAttr(params)
+        skku_sa.inference()
+
+        #inf_result_list 를 html로 파싱(해야함)
+
+        context = {
+                'result' : 'success'
+        }
+
+        return JsonResponse(context)
 
 
 def inferenceSA(request):
@@ -400,12 +421,6 @@ def inferenceNER(request):
 def inferenceFileUploadAjax(request):
         if logincheck(request):
                 return redirect('/login/')
-
-        s3c = boto3.client(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
 
         filelist = request.FILES.getlist('file')
 
@@ -493,18 +508,6 @@ def logincheck(request):
 def tempmodeldown(request):
         if logincheck(request):
                 return redirect('/login/')
-        
-        s3c = boto3.client(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
-
-        s3r = boto3.resource(
-                's3',
-                aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-        )
 
         localrootPath = "C:/arspraxiabucket/"
 
@@ -537,18 +540,6 @@ def tempinference(request):
     if logincheck(request):
             return redirect('/login/')
 
-    s3c = boto3.client(
-            's3',
-            aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-    )
-
-    s3r = boto3.resource(
-            's3',
-            aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
-    )
-
     localrootPath = "C:/arspraxiabucket/"
 
     modelsrcList = []
@@ -573,11 +564,21 @@ def tempinference(request):
     skku_sa = SKKU_SENTIMENT()
     skku_sa.setAttr("C:/arspraxiabucket/data/sa/inf/감성분석추론.csv", "modelpath")
     skku_sa.inference()
+    
+    #20221029 inf_result_list -> csv format save
+    inf_result_list = skku_sa.getInfResult()    
+    if not os.path.exists("C:/arspraxiabucket/data/sa/result/"):
+                os.makedirs("C:/arspraxiabucket/data/sa/result/")
+    now = str(datetime.now())
+    now = now.replace(':','.')
+    now = now[:19]
+    filename_str = "C:/arspraxiabucket/data/sa/result/"+now+".csv"
+    with open(filename_str, 'w', encoding="utf-8", newline="") as f:
+        wr = csv.writer(f)
+        for i in inf_result_list:
+                wr.writerow(i)
 
-    #20221029
-    #inf_result_list = skku_sa.getInfResult()
-    #inf_result_list 를 csv로 저장 // 여기까지 해주세요
-    #inf_result_list 를 html로 파싱
+    #inf_result_list 를 html로 파싱(해야함)
 
     result = ""
     """
@@ -586,7 +587,7 @@ def tempinference(request):
     print("샘플 문장 : "+sentence)
     print("샘플 결과 : "+result)
     """
-    # 받은 임시 모델파일 삭제
+    # delete downloaded temp model file
     shutil.rmtree(localrootPath+'model/1')
 
     context = {

@@ -13,14 +13,14 @@
             </label>
             {% if datalist %}
                 <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
-                    <option hidden="" value="0">데이터를 선택해주세요</option>
+                    <option hidden="" value="-1">데이터를 선택해주세요</option>
                         {% for data in datalist %}
                             <option value="{{forloop.counter}}">{{ data }}</option>
                         {% endfor %}
                 </select>
             {% else %}
                 <select id="dataSrc" class="form-select hyperparam" disabled>
-                    <option hidden="" value="0">데이터가 없습니다</option>
+                    <option hidden="" value="-1">데이터가 없습니다</option>
                 </select>
             {% endif %}
         </div>
@@ -29,14 +29,14 @@
             <label for="infModel" class="form-label">Model</label>            
             {% if inference_model %}
                 <select id="infModel" class="form-select hyperparam">
-                    <option hidden="" value="0">모델을 선택해주세요</option>
+                    <option hidden="" value="-1">모델을 선택해주세요</option>
                     {% for model in inference_model %}
-                        <option value="{{forloop.counter}}">{{ model.model_name }}</option>
+                        <option value="{{model.id}}">{{ model.model_name }}</option>
                     {% endfor %}
                 </select>    
             {% else %}
                 <select id="infModel" class="form-select hyperparam" disabled> 
-                    <option hidden="" value="0">저장된 모델이 없습니다</option>
+                    <option hidden="" value="-1">저장된 모델이 없습니다</option>
                 </select>
             {% endif %}
         </div>
@@ -252,8 +252,39 @@
 
     <script>
         function startInference(_this){
-            $(_this).hide();
-            $(".container, #paging").show();
+            //$(_this).hide();
+            //$(".container, #paging").show();
+
+            if(parseInt($("#dataSrc option:selected").val()) < 0){
+                modalShow("학습 데이터를 선택해주세요.");
+                return;
+            }
+            else if(parseInt($("#infModel option:selected").val()) < 0){
+                modalShow("추론 모델을 선택해주세요.");
+                return;
+            }
+            
+            //$(".hyperparam, .trainstart").attr("disabled", true);
+            //$(_this).hide();
+            
+            var param = {
+                    "dataSrc" : $("#dataSrc option:selected").text(),
+                    "inference_model" : parseInt($("#infModel option:selected").val()),
+            };
+
+            $.ajax({
+                url : "/inferenceStartAjax/",
+                type : "GET",
+                data : param,
+                dataType : "json",
+                success : function(data) {
+                    modalShow("추론이 성공적으로 완료되었습니다.");
+                },
+                error : function(e) {
+                    modalShow("추론이 실패했습니다.");
+                    console.log("error :" + e.response);
+                }
+            });
         }
 
         function searchForm(){
