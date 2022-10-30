@@ -11,11 +11,12 @@ urlpatterns = [
     path('dataFileUploadAjax/', views.dataFileUploadAjax),
     path('dataDownloadAjax/', views.dataDownloadAjax),
     path('train/', views.train),
-    path('trainInsertAjax/', views.trainInsertAjax),
+    path('trainStartAjax/', views.trainStartAjax),
     path('inference/', views.inference),
     path('inferenceUpload/', views.inferenceUpload),
     path('inferenceFileUploadAjax/', views.inferenceFileUploadAjax),
     path('inferenceSA/', views.inferenceSA),
+    path('inferenceStartAjax/', views.inferenceStartAjax),
     path('models/', views.models, name='models'),
     path('modelPopup/', views.modelPopup),
 

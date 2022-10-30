@@ -26,16 +26,12 @@
         <div class="col-md-12">
             <label for="pretrained" class="form-label">Model</label>
             <select class="form-select hyperparam" id="pretrained">
-                <option hidden="" value="0">학습 시킬 모델을 선택해주세요</option>
-                <option value="1">(Pretrained) KoELECTRA-base-v3-discriminator</option>
-                <option value="2">(Pretrained) KoELECTRA-small-v3-discriminator</option>
-                <option value="3">(Pretrained) KoBERT</option>
-                <option value="4">(Pretrained) DistilKoBERT</option>
-                <option value="5">(Pretrained) KoBERT-lm</option>            
+                <option hidden="" value="-1">학습 시킬 모델을 선택해주세요</option>
+                <option value="0">(Pretrained) KoELECTRA-small-v3-discriminator</option>           
                 {% if inference_model %}
-                    <option value="0" disabled>---------------------------------------------------------------------</option>
+                    <option value="-1" disabled>---------------------------------------------------------------------</option>
                     {% for model in inference_model %}
-                        <option value="{{forloop.counter}}">(Finetuned) {{ model.model_name }}</option>
+                        <option value="{{model.id}}">(Finetuned) {{ model.model_name }}</option>
                     {% endfor %}
                 {% endif %}
             </select>
@@ -43,15 +39,15 @@
         <div class="col-md-12">
             <label for="dataSrc" class="form-label">Data Set</label>
             {% if datalist %}
-                <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
-                    <option hidden="" value="0">데이터를 선택해주세요</option>
+                <select id="dataSrc" class="form-select hyperparam">
+                    <option hidden="" value="-1">데이터를 선택해주세요</option>
                         {% for data in datalist %}
                             <option value="{{forloop.counter}}">{{ data }}</option>
                         {% endfor %}    
                 </select>            
             {% else %}
                 <select id="dataSrc" class="form-select hyperparam" disabled> 
-                    <option hidden="" value="0">데이터가 없습니다</option>
+                    <option hidden="" value="-1">데이터가 없습니다</option>
                 </select>
             {% endif %}
         </div>
@@ -84,12 +80,7 @@
         });
 
         function startTraining(_this){
-            $(".hyperparam, .trainstart").attr("disabled", true);
-            $(_this).hide();
-            $(".container").show();
-            modalShow("모델 학습이 성공적으로 완료되었습니다.");
-
-            /*
+            //$(".container").show();
             if($("#modelname").val() == ""){
                 modalShow("모델 이름을 입력해주세요.");
                 return;
@@ -106,14 +97,17 @@
                 modalShow("배치사이즈를 설정해주세요.");
                 return;
             }
-            else if($("#pretrained option:selected").val() == "0"){
+            else if(parseInt($("#pretrained option:selected").val()) < 0){
                 modalShow("사전 학습 모델을 선택해주세요.");
                 return;
             }
-            else if($("#dataSrc option:selected").val() == "0"){
+            else if(parseInt($("#dataSrc option:selected").val()) < 0){
                 modalShow("학습 데이터를 선택해주세요.");
                 return;
             }
+
+            $(".hyperparam, .trainstart").attr("disabled", true);
+            $(_this).hide();
 
             var param = {
                     "task" : $("#task").val(),
@@ -125,11 +119,13 @@
                     "modelacc" : $("#modelacc").val(),
                     "modelf1" : $("#modelf1").val(),
                     "modelspeed" : $("#modelspeed").val(),
-                    "modelvolume" : $("#modelvolume").val()
+                    "modelvolume" : $("#modelvolume").val(),
+                    "pretrained" : parseInt($("#pretrained option:selected").val()),
+                    "dataSrc" : $("#dataSrc option:selected").text(),
             };
 
             $.ajax({
-                url : "/trainInsertAjax/",
+                url : "/trainStartAjax/",
                 type : "GET",
                 data : param,
                 dataType : "json",
@@ -141,7 +137,6 @@
                     console.log("error :" + e.response);
                 }
             });
-            */
         }
 
     </script>
