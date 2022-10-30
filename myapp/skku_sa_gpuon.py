@@ -35,19 +35,19 @@ s3r = boto3.resource(
 class SKKU_SENTIMENT:
     def setTrainAttr(self, params):
         self.args = loadJSON()
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 
         # Hyper Parameters Setting
-        self.epochs = params["modelepoch"]
-        self.batch_size = params["modelbs"]
-        self.learning_rate = params["modellr"]
+        self.epochs = int(params["modelepoch"])
+        self.batch_size = int(params["modelbs"])
+        self.learning_rate = float(params["modellr"])
 
         # Pretrained Model Download
         localrootPath = "C:/arspraxiabucket/"
         model_path = ""
         modelidx = params["pretrained_model"]
-        if modelidx == 0:
+        if int(modelidx) == 0:
             model_path = "monologg/koelectra-small-v3-discriminator"
         else:
             model_path = localrootPath+"model/"+modelidx+"/"  
@@ -111,7 +111,6 @@ class SKKU_SENTIMENT:
             batches = 0
             losses = []
             accuracies = []
-
             train_dataset = SentimentReviewDataset(self.train_data)
             train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
             optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
@@ -131,7 +130,7 @@ class SKKU_SENTIMENT:
                 y_batch = torch.tensor(y_batch)
                 y_batch = y_batch.type(torch.LongTensor)
                 y_batch = y_batch.to(self.device)
-                y_pred = self.model(input_ids_batch.to(self.device), attention_mask=attention_masks_batch.to(self.device))[0]
+                y_pred = self.model(input_ids_batch, attention_mask=attention_masks_batch)[0].to(self.device)
                 loss = F.cross_entropy(y_pred, y_batch)
                 loss.backward()
                 optimizer.step()
@@ -185,7 +184,7 @@ class SKKU_SENTIMENT:
         localrootPath = ""
         model_path = ""
         modelidx = params["inference_model"]
-        if modelidx == 0:
+        if int(modelidx) == 0:
             model_path = "monologg/koelectra-small-v3-discriminator"
         else:
             localrootPath = "C:/arspraxiabucket/"
@@ -276,7 +275,7 @@ class SentimentReviewDataset(Dataset):
             text, 
             return_tensors='pt',
             truncation=True,
-            max_length=self.args.max_length,
+            max_length=256,
             pad_to_max_length=True,
             add_special_tokens=True
         )
