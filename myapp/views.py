@@ -256,10 +256,10 @@ def trainStartAjax(request):
         trainStartAjax.learning_rate = request.GET["modellr"]
         trainStartAjax.batch_size = request.GET["modelbs"]
         trainStartAjax.description = request.GET["modeldes"]
-        trainStartAjax.accuracy = request.GET["modelacc"]
-        trainStartAjax.f1 = request.GET["modelf1"]
-        trainStartAjax.speed = request.GET["modelspeed"]
-        trainStartAjax.volume = request.GET["modelvolume"]
+        trainStartAjax.accuracy = skku_sa.getAccuracy()
+        trainStartAjax.f1 = skku_sa.getF1score()
+        trainStartAjax.volume = skku_sa.getModelsize()
+        trainStartAjax.speed = 0
         trainStartAjax.save()
 
         context = {

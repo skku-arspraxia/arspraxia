@@ -15,9 +15,10 @@ from attrdict import AttrDict
 from tqdm.notebook import tqdm
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Dataset
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TextClassificationPipeline, AdamW
         
@@ -145,10 +146,16 @@ class SKKU_SENTIMENT:
             losses.append(total_loss)
             accuracies.append(correct.float() / total)
             print(i, "Train Loss:", total_loss, "Accuracy:", correct.float() / total)
-        
-        # Save model to local storage    
-        last_data = NLP_models.objects.order_by("id").last()
-        model_new_idx = str(last_data.id+1)    
+                
+        self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, function_to_apply=self.args.function_to_apply, device=0)
+
+        # Save model to local storage
+        model_new_idx = 0
+        if NLP_models.objects.count() == 0:
+            model_new_idx = 1
+        else:
+            last_data = NLP_models.objects.order_by("id").last()
+            model_new_idx = str(last_data.id+1)
         output_dir = "C:/arspraxiabucket/model/"+model_new_idx
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -160,8 +167,16 @@ class SKKU_SENTIMENT:
 
         torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
 
-        # Save model files in AWS S3 bucket
         filelist = ["config.json", "pytorch_model.bin", "training_args.bin"]
+
+        # Get model size
+        self.model_size = 0
+        for file in filelist:
+             self.model_size += os.path.getsize(os.path.join(output_dir, file))
+
+        self.model_size = round(self.model_size/1000000, 2)
+
+        # Save model files in AWS S3 bucket
         for file in filelist:            
             fileuploadname = "model/"+model_new_idx+"/"+file
             with open(os.path.join(output_dir, file), "rb") as f:
@@ -173,6 +188,29 @@ class SKKU_SENTIMENT:
 
         # Delete temp local file
         shutil.rmtree(output_dir)
+
+        # Evaluate
+        self.evaluate()
+
+    
+    def evaluate(self):
+        start = time.time()
+        y_true = list(self.test_data[self.args.data_label[1]])
+        y_pred = []
+        
+        for i in self.test_data.index:
+            line = self.test_data.loc[i,self.args.data_label[0]]
+            label = self.sentiment_classifier(line)
+
+            for idx, val in enumerate(dict(self.args.label2id).items()):
+                if label[0]['label'] == val[0]:
+                    y_pred.append(idx)
+				
+        self.runtime = time.time() - start
+        self.accuracy = accuracy_score(y_true, y_pred)
+        self.precesion = precision_score(y_true, y_pred, average="micro")
+        self.recall =recall_score(y_true, y_pred, average="micro")
+        self.f1score = f1_score(y_true, y_pred, average="micro")
 
 
     def setInferenceAttr(self, params):
@@ -253,6 +291,26 @@ class SKKU_SENTIMENT:
 
     def getInfResult(self):
         return self.inf_result
+
+
+    def getModelsize(self):
+        return self.model_size
+
+
+    def getF1score(self):
+        return self.f1score
+
+
+    def getAccuracy(self):
+        return self.accuracy
+
+
+    def getPrecision(self):
+        return self.precesion
+
+
+    def getRecall(self):
+        return self.recall
 
 
 class SentimentReviewDataset(Dataset):  
