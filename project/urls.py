@@ -12,6 +12,7 @@ urlpatterns = [
     path('dataDownloadAjax/', views.dataDownloadAjax),
     path('train/', views.train),
     path('trainStartAjax/', views.trainStartAjax),
+    path('trainGetStatusAjax/', views.trainGetStatusAjax),
     path('inference/', views.inference),
     path('inferenceUpload/', views.inferenceUpload),
     path('inferenceFileUploadAjax/', views.inferenceFileUploadAjax),

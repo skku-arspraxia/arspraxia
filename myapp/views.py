@@ -5,6 +5,7 @@ import pandas as pd
 import json
 import shutil
 import csv
+import threading
 
 from urllib.parse import quote
 from django.shortcuts import render, redirect
@@ -30,6 +31,9 @@ s3c = boto3.client(
         aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
 )
+
+train_current_step = 0
+train_current_epoch = 0
 
 @csrf_exempt
 def login(request):
@@ -244,9 +248,25 @@ def trainStartAjax(request):
             'modellr' : request.GET["modellr"],
         }
 
+        global train_current_step
+        global train_current_epoch
+
+        train_current_step = 0
+        train_current_epoch = 0
+
         skku_sa = SKKU_SENTIMENT_TEMP()
+
+        def skku_sa_status():
+            global train_current_step
+            global train_current_epoch
+            train_current_step = skku_sa.getCurrentStep()
+            train_current_step = skku_sa.getCurrentEpoch()
+
+        timer = threading.Timer(1, skku_sa_status)
+        timer.start()
         skku_sa.setTrainAttr(params)
         skku_sa.train()
+        timer.cancel()
 
         # DB 저장
         trainStartAjax = NLP_models()
@@ -268,6 +288,21 @@ def trainStartAjax(request):
 
         return JsonResponse(context)
 
+
+def trainGetStatusAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        global train_current_step
+        global train_current_epoch
+        
+        context = {
+                'train_current_step' : train_current_step,
+                'train_current_epoch' : train_current_epoch
+        }
+
+        return JsonResponse(context)
+        
 
 def inference(request):
         if logincheck(request):

@@ -61,6 +61,10 @@
 
     <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="startTraining(this);">Start Training</button>
 
+    <div class="status" style="display:none;">
+
+    </div>
+
     <div class="container" style="display:none;">
         <img src="{% static 'img/tmp/train.png' %}" style="width:100%;height:auto;"/>
     </div>
@@ -124,6 +128,51 @@
                     "dataSrc" : $("#dataSrc option:selected").text(),
             };
 
+            $(".status").show();
+            
+            var last_epoch = 0;
+            setInterval(function(){
+                $.ajax({
+                    url : "/trainGetStatusAjax/",
+                    type : "GET",
+                    data : param,
+                    dataType : "json",
+                    success : function(data) {
+                        var current_step = parseInt(data["current_step"]);
+                        var current_epoch = parseInt(data["current_epoch"]);
+                        var appendHTML = "";
+                        if(current_step == 1){
+                            appendHTML = "Downloading pretained model";
+                        }
+                        if(current_step == 2){
+                            appendHTML += "Downloading pretained model finished";
+                            appendHTML += "Downloading training data";
+                        }
+                        if(current_step == 3){
+                            appendHTML += "Downloading training data finished";
+                            last_epoch = current_epoch;
+                            if(last_epoch != current_epoch){
+                                appendHTML += "Training : Epoch " + current_epoch + " / " + Math.round($("#modelepoch").val());
+                            }
+                        }
+                        if(current_step == 4){
+                            appendHTML += "Training finished";
+                            appendHTML += "Uploading model";
+                        }
+                        if(current_step == 5){
+                            appendHTML += "Uploading finished";
+                            appendHTML += "Evaluating";
+                        }
+
+                        $(".test").html(appendHTML);
+                    },
+                    error : function(e) {
+                        modalShow("모델 학습이 실패했습니다.");
+                        console.log("error :" + e.response);
+                    }
+                });
+            },1000);
+
             $.ajax({
                 url : "/trainStartAjax/",
                 type : "GET",
@@ -133,6 +182,7 @@
                     modalShow("모델 학습이 성공적으로 완료되었습니다.");
                 },
                 error : function(e) {
+                    $(".status").hide();
                     modalShow("모델 학습이 실패했습니다.");
                     console.log("error :" + e.response);
                 }
