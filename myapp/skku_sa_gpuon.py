@@ -34,10 +34,13 @@ s3r = boto3.resource(
 )
 
 class SKKU_SENTIMENT:
-    def setTrainAttr(self, params):
-        self.args = loadJSON()
+    def __init__(self):
+        self.trainFinished = False
         self.currentStep = 1
         self.currentEpoch = 0
+
+    def setTrainAttr(self, params):
+        self.args = loadJSON()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 
@@ -219,6 +222,7 @@ class SKKU_SENTIMENT:
         self.precesion = precision_score(y_true, y_pred, average="micro")
         self.recall =recall_score(y_true, y_pred, average="micro")
         self.f1score = f1_score(y_true, y_pred, average="micro")
+        self.trainFinished = True
 
 
     def setInferenceAttr(self, params):
@@ -327,6 +331,10 @@ class SKKU_SENTIMENT:
     
     def getCurrentEpoch(self):
         return self.currentEpoch
+
+
+    def isTrainFinished(self):
+        return self.trainFinished
 
 
 class SentimentReviewDataset(Dataset):  

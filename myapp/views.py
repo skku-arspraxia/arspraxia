@@ -5,7 +5,8 @@ import pandas as pd
 import json
 import shutil
 import csv
-import threading
+import schedule
+import time
 
 from urllib.parse import quote
 from django.shortcuts import render, redirect
@@ -31,9 +32,6 @@ s3c = boto3.client(
         aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
 )
-
-train_current_step = 0
-train_current_epoch = 0
 
 @csrf_exempt
 def login(request):
@@ -235,6 +233,31 @@ def train(request):
 
         return render(request, 'train.html', context)
         
+train_current_step = 0
+train_current_epoch = 0
+
+def trainGetStatusAjax(request):
+        if logincheck(request):
+                return redirect('/login/')
+
+        global train_current_step
+        global train_current_epoch
+        
+        context = {
+                'train_current_step' : train_current_step,
+                'train_current_epoch' : train_current_epoch
+        }
+
+        return JsonResponse(context)
+
+
+def skku_sa_status(step, epoch):
+    global train_current_step
+    global train_current_epoch
+
+    train_current_step = step
+    train_current_epoch = epoch
+
 
 def trainStartAjax(request):
         if logincheck(request):
@@ -250,24 +273,21 @@ def trainStartAjax(request):
 
         global train_current_step
         global train_current_epoch
-
         train_current_step = 0
         train_current_epoch = 0
+        tempCheck = False
 
         skku_sa = SKKU_SENTIMENT_TEMP()
 
-        def skku_sa_status():
-            global train_current_step
-            global train_current_epoch
-            train_current_step = skku_sa.getCurrentStep()
-            train_current_step = skku_sa.getCurrentEpoch()
-
-        timer = threading.Timer(1, skku_sa_status)
-        timer.start()
-        skku_sa.setTrainAttr(params)
-        skku_sa.train()
-        timer.cancel()
-
+        schedule.every(1).seconds.do(skku_sa_status, skku_sa.getCurrentStep(), skku_sa.getCurrentEpoch())  
+        while skku_sa.isTrainFinished() == False:
+            schedule.run_pending()
+            time.sleep(1)
+            while tempCheck == False:
+                skku_sa.setTrainAttr(params)
+                skku_sa.train()
+                tempCheck = True     
+        
         # DB 저장
         trainStartAjax = NLP_models()
         trainStartAjax.model_task = request.GET["task"]
@@ -284,21 +304,6 @@ def trainStartAjax(request):
 
         context = {
                 'result' : 'success'
-        }
-
-        return JsonResponse(context)
-
-
-def trainGetStatusAjax(request):
-        if logincheck(request):
-                return redirect('/login/')
-
-        global train_current_step
-        global train_current_epoch
-        
-        context = {
-                'train_current_step' : train_current_step,
-                'train_current_epoch' : train_current_epoch
         }
 
         return JsonResponse(context)

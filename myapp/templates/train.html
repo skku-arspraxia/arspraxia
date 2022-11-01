@@ -61,18 +61,11 @@
 
     <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="startTraining(this);">Start Training</button>
 
-    <div class="status" style="display:none;">
-
-    </div>
+    <div class="status" style="display:none;margin-top:50px;"></div>
 
     <div class="container" style="display:none;">
         <img src="{% static 'img/tmp/train.png' %}" style="width:100%;height:auto;"/>
     </div>
-
-    <input type="hidden" class="form-control hyperparam" id="modelacc" name="modelacc" value="0.91"/>
-    <input type="hidden" class="form-control hyperparam" id="modelf1" name="modelf1" value="0.92"/>
-    <input type="hidden" class="form-control hyperparam" id="modelspeed" name="modelspeed" value="23.1"/>
-    <input type="hidden" class="form-control hyperparam" id="modelvolume" name="modelvolume" value="48.4"/>
 
     <script>
         $(document).ready(function(){
@@ -111,7 +104,6 @@
             }
 
             $(".hyperparam, .trainstart").attr("disabled", true);
-            $(_this).hide();
 
             var param = {
                     "task" : $("#task").val(),
@@ -120,58 +112,9 @@
                     "modellr" : $("#modellr").val(),
                     "modelbs" : Math.round($("#modelbs").val()),
                     "modeldes" : $("#modeldes").val(),
-                    "modelacc" : $("#modelacc").val(),
-                    "modelf1" : $("#modelf1").val(),
-                    "modelspeed" : $("#modelspeed").val(),
-                    "modelvolume" : $("#modelvolume").val(),
                     "pretrained" : parseInt($("#pretrained option:selected").val()),
                     "dataSrc" : $("#dataSrc option:selected").text(),
-            };
-
-            $(".status").show();
-            
-            var last_epoch = 0;
-            setInterval(function(){
-                $.ajax({
-                    url : "/trainGetStatusAjax/",
-                    type : "GET",
-                    data : param,
-                    dataType : "json",
-                    success : function(data) {
-                        var current_step = parseInt(data["current_step"]);
-                        var current_epoch = parseInt(data["current_epoch"]);
-                        var appendHTML = "";
-                        if(current_step == 1){
-                            appendHTML = "Downloading pretained model";
-                        }
-                        if(current_step == 2){
-                            appendHTML += "Downloading pretained model finished";
-                            appendHTML += "Downloading training data";
-                        }
-                        if(current_step == 3){
-                            appendHTML += "Downloading training data finished";
-                            last_epoch = current_epoch;
-                            if(last_epoch != current_epoch){
-                                appendHTML += "Training : Epoch " + current_epoch + " / " + Math.round($("#modelepoch").val());
-                            }
-                        }
-                        if(current_step == 4){
-                            appendHTML += "Training finished";
-                            appendHTML += "Uploading model";
-                        }
-                        if(current_step == 5){
-                            appendHTML += "Uploading finished";
-                            appendHTML += "Evaluating";
-                        }
-
-                        $(".test").html(appendHTML);
-                    },
-                    error : function(e) {
-                        modalShow("모델 학습이 실패했습니다.");
-                        console.log("error :" + e.response);
-                    }
-                });
-            },1000);
+            };                       
 
             $.ajax({
                 url : "/trainStartAjax/",
@@ -179,14 +122,76 @@
                 data : param,
                 dataType : "json",
                 success : function(data) {
+                    clearInterval(statusInterval);
+                    $(".status").hide();
+                    
+                    $(".hyperparam, .trainstart").attr("disabled", false);
+                    $("#modelname").val("");
+                    $("#modelepoch").val("");
+                    $("#modellr").val("");
+                    $("#modelbs").val("");
+                    $("#modeldes").val("");
+                    $("#pretrained").val(-1);
+                    $("#dataSrc").val(-1);
+
                     modalShow("모델 학습이 성공적으로 완료되었습니다.");
                 },
                 error : function(e) {
+                    clearInterval(statusInterval);
                     $(".status").hide();
                     modalShow("모델 학습이 실패했습니다.");
                     console.log("error :" + e.response);
                 }
             });
+
+            var last_epoch = 0;
+            var statusInterval = setInterval(getStatusAjax, 1000);     
+            function getStatusAjax(){
+                $.ajax({
+                    url : "/trainGetStatusAjax/",
+                    type : "GET",
+                    data : param,
+                    async : false,
+                    dataType : "json",
+                    success : function(data) {
+                        var current_step = parseInt(data["train_current_step"]);
+                        var current_epoch = parseInt(data["train_current_epoch"]);
+                        var appendHTML = "";
+
+                        if(current_step == 1){
+                            appendHTML = "Downloading pretained model<br/>";
+                        }
+                        if(current_step == 2){
+                            appendHTML += "Downloading pretained model finished<br/>";
+                            appendHTML += "Downloading training data<br/>";
+                        }
+                        if(current_step == 3){
+                            appendHTML += "Downloading training data finished<br/>";
+                            last_epoch = current_epoch;
+                            if(last_epoch != current_epoch){
+                                appendHTML += "Training : Epoch " + current_epoch + " / " + Math.round($("#modelepoch").val()) + "<br/>";
+                            }
+                        }
+                        if(current_step == 4){
+                            appendHTML += "Training finished<br/>";
+                            appendHTML += "Uploading model<br/>";
+                        }
+                        if(current_step == 5){
+                            appendHTML += "Uploading finished<br/>";
+                            appendHTML += "Evaluating<br/>";
+                        }
+
+                        $(".status").html(appendHTML);
+                        $(".status").show();
+                    },
+                    error : function(e) {
+                        clearInterval(statusInterval);
+                        $(".status").hide();
+                        modalShow("Error loading status");
+                        console.log("error :" + e.response);
+                    }
+                });
+            }  
         }
 
     </script>
