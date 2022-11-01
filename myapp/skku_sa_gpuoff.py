@@ -40,10 +40,13 @@ s3r = boto3.resource(
 )
 
 class SKKU_SENTIMENT:
-    def setTrainAttr(self, params):
-        self.args = loadJSON()
+    def __init__(self):
+        self.trainFinished = False
         self.currentStep = 1
         self.currentEpoch = 0
+
+    def setTrainAttr(self, params):
+        self.args = loadJSON()
         #self.device = "cuda" if torch.cuda.is_available() else "cpu"
         #self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 
@@ -169,6 +172,7 @@ class SKKU_SENTIMENT:
 
 
     def train(self):
+        self.trainFinished = True
         pass
     
     
@@ -201,11 +205,17 @@ class SKKU_SENTIMENT:
 
     
     def getCurrentStep(self):
-        return 1
+        self.currentStep += 1
+        return self.currentStep
 
     
     def getCurrentEpoch(self):
-        return 1
+        self.currentEpoch += 1
+        return self.currentEpoch
+
+
+    def isTrainFinished(self):
+        return self.trainFinished
 
 
 def loadJSON():
