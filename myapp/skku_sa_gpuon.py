@@ -36,6 +36,8 @@ s3r = boto3.resource(
 class SKKU_SENTIMENT:
     def setTrainAttr(self, params):
         self.args = loadJSON()
+        self.currentStep = 1
+        self.currentEpoch = 0
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 
@@ -70,6 +72,7 @@ class SKKU_SENTIMENT:
                 s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)  
 
         self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        self.currentStep = 2    # Finished downloading model
 
         # Train Data Download
         tdfilePath = "data/sa/train/"
@@ -102,6 +105,7 @@ class SKKU_SENTIMENT:
             self.dataset = self.dataset.replace(val[0], idx)
 
         self.train_data, self.test_data = train_test_split(self.dataset, test_size=self.args.test_size)
+        self.currentStep = 3    # Finished downloading data
 
 
     def train(self):
@@ -145,9 +149,12 @@ class SKKU_SENTIMENT:
 
             losses.append(total_loss)
             accuracies.append(correct.float() / total)
+            self.currentEpoch += 1
+            print("Current Epoch : "+str(self.currentEpoch))
             print(i, "Train Loss:", total_loss, "Accuracy:", correct.float() / total)
                 
         self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, function_to_apply=self.args.function_to_apply, device=0)
+        self.currentStep = 4    # Finished training
 
         # Save model to local storage
         model_new_idx = 0
@@ -155,8 +162,8 @@ class SKKU_SENTIMENT:
             model_new_idx = 1
         else:
             last_data = NLP_models.objects.order_by("id").last()
-            model_new_idx = str(last_data.id+1)
-        output_dir = "C:/arspraxiabucket/model/"+model_new_idx
+            model_new_idx = last_data.id+1
+        output_dir = "C:/arspraxiabucket/model/"+str(model_new_idx)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -178,7 +185,7 @@ class SKKU_SENTIMENT:
 
         # Save model files in AWS S3 bucket
         for file in filelist:            
-            fileuploadname = "model/"+model_new_idx+"/"+file
+            fileuploadname = "model/"+str(model_new_idx)+"/"+file
             with open(os.path.join(output_dir, file), "rb") as f:
                 s3c.upload_fileobj(
                         f,
@@ -188,6 +195,7 @@ class SKKU_SENTIMENT:
 
         # Delete temp local file
         shutil.rmtree(output_dir)
+        self.currentStep = 5    # Finished uploading model
 
         # Evaluate
         self.evaluate()
@@ -311,6 +319,14 @@ class SKKU_SENTIMENT:
 
     def getRecall(self):
         return self.recall
+
+    
+    def getCurrentStep(self):
+        return self.currentStep
+
+    
+    def getCurrentEpoch(self):
+        return self.currentEpoch
 
 
 class SentimentReviewDataset(Dataset):  

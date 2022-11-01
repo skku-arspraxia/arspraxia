@@ -42,6 +42,8 @@ s3r = boto3.resource(
 class SKKU_SENTIMENT:
     def setTrainAttr(self, params):
         self.args = loadJSON()
+        self.currentStep = 1
+        self.currentEpoch = 0
         #self.device = "cuda" if torch.cuda.is_available() else "cpu"
         #self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 
@@ -175,7 +177,35 @@ class SKKU_SENTIMENT:
 
 
     def getInfResult(self):
-        pass
+        return 1
+
+
+    def getModelsize(self):
+        return 1
+
+
+    def getF1score(self):
+        return 1
+
+
+    def getAccuracy(self):
+        return 1
+
+
+    def getPrecision(self):
+        return 1
+
+
+    def getRecall(self):
+        return 1
+
+    
+    def getCurrentStep(self):
+        return 1
+
+    
+    def getCurrentEpoch(self):
+        return 1
 
 
 def loadJSON():
