@@ -23,7 +23,7 @@ import json
 import os
 from attrdict import AttrDict
 
-class SKKU_SENTIMENT:
+class SKKU_SENTIMENT_TEMP:
     def setAttr(self, datapath, modelpath):
         #self.args = loadJSON()
         #self.device = "cuda" if torch.cuda.is_available() else "cpu"
