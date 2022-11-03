@@ -572,7 +572,10 @@ class NaverNerProcessor(object):
     def _create_examples(self, dataset):
         examples = []
         for (i, data) in enumerate(dataset):
-            words, labels = data.split('\t')
+            words, labels = data.rsplit(',', 1)
+            if words[0] == '"' and words[len(words)-1] == '"' :
+                words = words[1:]
+                words = words[:-1]
             words = words.split()
             labels = labels.split()
             assert len(words) == len(labels)
