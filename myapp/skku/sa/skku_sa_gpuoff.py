@@ -22,7 +22,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Text
 import json
 import pandas as pd
 from attrdict import AttrDict
-from .models import NLP_models
+from ...models import NLP_models
 import os
 import boto3
 import project.settings
@@ -219,7 +219,7 @@ class SKKU_SENTIMENT:
 
 
 def loadJSON():
-    with open('./config/config.json', encoding="UTF-8") as f:
+    with open('./config/config_sa.json', encoding="UTF-8") as f:
         args = AttrDict(json.load(f))	
     return args
 

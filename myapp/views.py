@@ -16,10 +16,11 @@ from django.core.paginator import Paginator
 from django.db import connection
 from .models import NLP_models
 from datetime import datetime
-
-from myapp.skku_sa import SKKU_SENTIMENT
-from myapp.skku_sa_gpuoff import SKKU_SENTIMENT as SKKU_SENTIMENT_TEMP
-#from myapp.skku_sa_gpuon import SKKU_SENTIMENT as SKKU_SENTIMENT_TEMP
+from myapp.skku.sa.skku_sa import SKKU_SENTIMENT_TEMP
+from myapp.skku.ner.skku_ner_gpuoff import SKKU_NER
+#from myapp.skku.ner.skku_ner_gpuon import SKKU_NER
+from myapp.skku.sa.skku_sa_gpuoff import SKKU_SENTIMENT
+#from myapp.skku_sa_gpuon import SKKU_SENTIMENT
 
 s3r = boto3.resource(
         's3',
@@ -277,18 +278,7 @@ def trainStartAjax(request):
         train_current_epoch = 0
         tempCheck = False
 
-        skku_sa = SKKU_SENTIMENT_TEMP()
-
-        schedule.every(1).seconds.do(skku_sa_status, skku_sa.getCurrentStep(), skku_sa.getCurrentEpoch())  
-        while skku_sa.isTrainFinished() == False:
-            schedule.run_pending()
-            time.sleep(1)
-            while tempCheck == False:
-                skku_sa.setTrainAttr(params)
-                skku_sa.train()
-                tempCheck = True     
-        
-        # DB 저장
+        # DB 생성 및 저장
         trainStartAjax = NLP_models()
         trainStartAjax.model_task = request.GET["task"]
         trainStartAjax.model_name = request.GET["modelname"]
@@ -296,9 +286,35 @@ def trainStartAjax(request):
         trainStartAjax.learning_rate = request.GET["modellr"]
         trainStartAjax.batch_size = request.GET["modelbs"]
         trainStartAjax.description = request.GET["modeldes"]
-        trainStartAjax.accuracy = skku_sa.getAccuracy()
-        trainStartAjax.f1 = skku_sa.getF1score()
-        trainStartAjax.volume = skku_sa.getModelsize()
+
+        if request.GET["task"] == "sa":
+            skku_sa = SKKU_SENTIMENT()
+
+            schedule.every(1).seconds.do(skku_sa_status, skku_sa.getCurrentStep(), skku_sa.getCurrentEpoch())  
+            while skku_sa.isTrainFinished() == False:
+                schedule.run_pending()
+                time.sleep(1)
+                while tempCheck == False:
+                    skku_sa.setTrainAttr(params)
+                    skku_sa.train()
+                    tempCheck = True     
+        
+        elif request.GET["task"] == "ner":
+            skku_ner = SKKU_NER()
+            skku_ner.setTrainAttr(params)
+            skku_ner.train()
+
+        # DB 저장
+        if request.GET["task"] == "sa":
+            trainStartAjax.accuracy = skku_sa.getAccuracy()
+            trainStartAjax.f1 = skku_sa.getF1score()
+            trainStartAjax.volume = skku_sa.getModelsize()
+
+        elif request.GET["task"] == "ner":
+            trainStartAjax.accuracy = skku_ner.getAccuracy()
+            trainStartAjax.f1 = skku_ner.getF1score()
+            trainStartAjax.volume = skku_ner.getModelsize()
+
         trainStartAjax.speed = 0
         trainStartAjax.save()
 
@@ -433,9 +449,14 @@ def inferenceStartAjax(request):
             'inference_model' : request.GET["inference_model"],
         }
 
-        skku_sa = SKKU_SENTIMENT_TEMP()
-        skku_sa.setInferenceAttr(params)
-        skku_sa.inference()
+        if request.GET["task"] == "sa":
+            skku_sa = SKKU_SENTIMENT()
+            skku_sa.setInferenceAttr(params)
+            skku_sa.inference()
+        elif request.GET["task"] == "ner":
+            skku_ner = SKKU_NER()
+            skku_ner.setInferenceAttr(params)
+            skku_ner.inference()
 
         #inf_result_list 를 html로 파싱(해야함)
 
@@ -601,7 +622,7 @@ def tempinference(request):
 
     # inf할 데이터 없으면 다운받는 로직도 구현해야함
 
-    skku_sa = SKKU_SENTIMENT()
+    skku_sa = SKKU_SENTIMENT_TEMP()
     skku_sa.setAttr("C:/arspraxiabucket/data/sa/inf/감성분석추론.csv", "modelpath")
     skku_sa.inference()
     
