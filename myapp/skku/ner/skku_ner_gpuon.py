@@ -211,60 +211,58 @@ class SKKU_NER:
                     self.model.zero_grad()
                     global_step += 1
 
-                    if self.args.logging_steps > 0 and global_step % self.args.logging_steps == 0:
-                        self.evaluate()
-
-                    if self.args.save_steps > 0 and global_step % self.args.save_steps == 0:
-                        # Save model to local storage
-                        model_new_idx = 0
-                        if NLP_models.objects.count() == 0:
-                            model_new_idx = 1
-                        else:
-                            last_data = NLP_models.objects.order_by("id").last()
-                            model_new_idx = last_data.id+1
-                        output_dir = "C:/arspraxiabucket/model/"+str(model_new_idx)
-                        if not os.path.exists(output_dir):
-                            os.makedirs(output_dir)
-
-                        model_to_save = (
-                            self.model.module if hasattr(self.model, "module") else self.model
-                        )
-                        model_to_save.save_pretrained(output_dir)
-
-                        torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
-
-                        filelist = ["config.json", "pytorch_model.bin", "training_args.bin"]
-
-                        # Get model size
-                        self.model_size = 0
-                        for file in filelist:
-                            self.model_size += os.path.getsize(os.path.join(output_dir, file))
-
-                        self.model_size = round(self.model_size/1000000, 2)
-
-                        # Save model files in AWS S3 bucket
-                        for file in filelist:            
-                            fileuploadname = "model/"+str(model_new_idx)+"/"+file
-                            with open(os.path.join(output_dir, file), "rb") as f:
-                                s3c.upload_fileobj(
-                                        f,
-                                        'arspraxiabucket',
-                                        fileuploadname
-                                )
-
-                        # Delete temp local file
-                        shutil.rmtree(output_dir)
-                        self.currentStep = 5    # Finished uploading model
-
                 if self.args.max_steps > 0 and global_step > self.args.max_steps:
                     break
 
             mb.write("Epoch {} done".format(epoch + 1))
+            self.currentEpoch += 1
 
             if self.args.max_steps > 0 and global_step > self.args.max_steps:
                 break
-            
-        self.ner = NerPipeline(model=self.model, tokenizer=self.tokenizer, ignore_labels=[], ignore_special_tokens=True)
+        self.currentStep = 4    # Finished training
+
+        # Save model to local storage
+        model_new_idx = 0
+        if NLP_models.objects.count() == 0:
+            model_new_idx = 1
+        else:
+            last_data = NLP_models.objects.order_by("id").last()
+            model_new_idx = last_data.id+1
+        output_dir = "C:/arspraxiabucket/model/"+str(model_new_idx)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        model_to_save = (
+            self.model.module if hasattr(self.model, "module") else self.model
+        )
+        model_to_save.save_pretrained(output_dir)
+
+        torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+
+        filelist = ["config.json", "pytorch_model.bin", "training_args.bin"]
+
+        # Get model size
+        self.model_size = 0
+        for file in filelist:
+            self.model_size += os.path.getsize(os.path.join(output_dir, file))
+
+        self.model_size = round(self.model_size/1000000, 2)
+
+        # Save model files in AWS S3 bucket
+        for file in filelist:            
+            fileuploadname = "model/"+str(model_new_idx)+"/"+file
+            with open(os.path.join(output_dir, file), "rb") as f:
+                s3c.upload_fileobj(
+                        f,
+                        'arspraxiabucket',
+                        fileuploadname
+                )
+
+        # Delete temp local file
+        shutil.rmtree(output_dir)
+        self.currentStep = 5    # Finished uploading model
+        
+        self.evaluate()
 
     
     def evaluate(self):
@@ -347,7 +345,7 @@ class SKKU_NER:
         # Inference Model Download
         localrootPath = "C:/arspraxiabucket/"
         model_path = ""
-        modelidx = params["pretrained_model"]
+        modelidx = params["inference_model"]
         if int(modelidx) == 0:
             # Hugging Face
             processor = NaverNerProcessor(self.args)
@@ -498,8 +496,9 @@ def ner_convert_examples_to_features(
         task,
         pad_token_label_id=-100,
 ):
-    label_lst = NaverNerProcessor.get_labels()
-    label_map = {label: i for i, label in enumerate(label_lst)}
+    label_lst = NaverNerProcessor(args)
+    label_lst_label = label_lst.get_labels()
+    label_map = {label: i for i, label in enumerate(label_lst_label)}
 
     features = []
     for (ex_index, example) in enumerate(examples):
@@ -572,10 +571,7 @@ class NaverNerProcessor(object):
     def _create_examples(self, dataset):
         examples = []
         for (i, data) in enumerate(dataset):
-            words, labels = data.rsplit(',', 1)
-            if words[0] == '"' and words[len(words)-1] == '"' :
-                words = words[1:]
-                words = words[:-1]
+            words, labels = data.split('\t')
             words = words.split()
             labels = labels.split()
             assert len(words) == len(labels)
@@ -765,8 +761,21 @@ class NerPipeline(Pipeline):
             return answers[0]
         return answers
 
+        
+    def _sanitize_parameters(self, **pipeline_parameters):
+        pass
+
+    def preprocess(self, **pipeline_parameters):
+        pass
+
+    def postprocess(self, **pipeline_parameters):
+        pass
+    
+    def _forward(self, **pipeline_parameters):
+        pass
+
 
 def loadJSON():
-    with open("./nermodel_before_train/config_ner.json", encoding="UTF-8") as f:
+    with open("./config/config_ner.json", encoding="UTF-8") as f:
         args = AttrDict(json.load(f))	
     return args

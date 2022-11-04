@@ -6,9 +6,9 @@ from numpy.lib.function_base import average
 from scipy.stats import pearsonr, spearmanr
 from seqeval import metrics as seqeval_metrics
 from sklearn import metrics as sklearn_metrics
-from tokenization_kobert import KoBertTokenizer
-from tokenization_hanbert import HanBertTokenizer
-from evaluate_v1_0 import eval_during_train
+from .tokenization_kobert import KoBertTokenizer
+from .tokenization_hanbert import HanBertTokenizer
+from .evaluate_v1_0 import eval_during_train
 from transformers import (
     BertConfig,
     DistilBertConfig,
