@@ -20,7 +20,7 @@ from myapp.skku.sa.skku_sa import SKKU_SENTIMENT_TEMP
 from myapp.skku.ner.skku_ner_gpuoff import SKKU_NER
 #from myapp.skku.ner.skku_ner_gpuon import SKKU_NER
 from myapp.skku.sa.skku_sa_gpuoff import SKKU_SENTIMENT
-#from myapp.skku_sa_gpuon import SKKU_SENTIMENT
+#from myapp.skku.sa.skku_sa_gpuon import SKKU_SENTIMENT
 
 s3r = boto3.resource(
         's3',
@@ -289,7 +289,10 @@ def trainStartAjax(request):
 
         if request.GET["task"] == "sa":
             skku_sa = SKKU_SENTIMENT()
+            skku_sa.setTrainAttr(params)
+            skku_sa.train()
 
+            """
             schedule.every(1).seconds.do(skku_sa_status, skku_sa.getCurrentStep(), skku_sa.getCurrentEpoch())  
             while skku_sa.isTrainFinished() == False:
                 schedule.run_pending()
@@ -298,7 +301,8 @@ def trainStartAjax(request):
                     skku_sa.setTrainAttr(params)
                     skku_sa.train()
                     tempCheck = True     
-        
+            """
+            
         elif request.GET["task"] == "ner":
             skku_ner = SKKU_NER()
             skku_ner.setTrainAttr(params)
