@@ -313,11 +313,13 @@ def trainStartAjax(request):
             trainStartAjax.precision = skku_sa.getPrecision()
             trainStartAjax.recall = skku_sa.getRecall()
             trainStartAjax.f1 = skku_sa.getF1score()
+            trainStartAjax.volume = skku_sa.getModelsize()
 
         elif request.GET["task"] == "ner":
             trainStartAjax.precision = skku_ner.getPrecision()
             trainStartAjax.recall = skku_ner.getRecall()
             trainStartAjax.f1 = skku_ner.getF1score()
+            trainStartAjax.volume = skku_ner.getModelsize()
 
         trainStartAjax.save()
 
