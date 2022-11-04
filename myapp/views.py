@@ -310,16 +310,15 @@ def trainStartAjax(request):
 
         # DB 저장
         if request.GET["task"] == "sa":
-            trainStartAjax.accuracy = skku_sa.getAccuracy()
+            trainStartAjax.precision = skku_sa.getPrecision()
+            trainStartAjax.recall = skku_sa.getRecall()
             trainStartAjax.f1 = skku_sa.getF1score()
-            trainStartAjax.volume = skku_sa.getModelsize()
 
         elif request.GET["task"] == "ner":
-            trainStartAjax.accuracy = skku_ner.getAccuracy()
+            trainStartAjax.precision = skku_ner.getPrecision()
+            trainStartAjax.recall = skku_ner.getRecall()
             trainStartAjax.f1 = skku_ner.getF1score()
-            trainStartAjax.volume = skku_ner.getModelsize()
 
-        trainStartAjax.speed = 0
         trainStartAjax.save()
 
         context = {
@@ -552,9 +551,9 @@ def modelPopup(request):
                         "epoch":model_input.epoch,
                         "batch_size": model_input.batch_size,
                         "learning_rate": model_input.learning_rate,
-                        "accuracy": model_input.accuracy,
+                        "precision": model_input.precision,
                         "f1":model_input.f1,
-                        "speed":model_input.speed,
+                        "recall":model_input.recall,
                         "volume":model_input.volume,
                         "date":model_input.date,
                         "description": model_input.description,
