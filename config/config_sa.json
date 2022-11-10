@@ -17,8 +17,18 @@
 	"LABEL_2" : "긍정"
   },
   "function_to_apply" : "softmax",
+  "return_tensors" : "pt",
+  "input_ids" : "input_ids",
+  "attention_mask" : "attention_mask",
   "pretrained_model" : "monologg/koelectra-small-v3-discriminator",
   "num_labels" : 3,
   "max_length" : 256,
-  "test_size" : 0.2
+  "test_size" : 0.2,
+  "path_local_root" : "C:/arspraxiabucket/",
+  "path_train_data" : "data/sa/train/",
+  "path_inf_data" : "data/sa/inf/",
+  "path_result_data" : "data/sa/result/",
+  "file_config_json" : "config.json",
+  "file_model_bin" : "pytorch_model.bin",
+  "file_args_bin" : "training_args.bin"
 }

@@ -33,15 +33,15 @@ s3r = boto3.resource(
     aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
 )
 
-class SKKU_SENTIMENT:
+class SKKU_SA:
     def __init__(self):
+        self.args = loadJSON()
         self.trainFinished = False
         self.currentStep = 1
         self.currentEpoch = 0
 
 
     def setTrainAttr(self, params):
-        self.args = loadJSON()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 
@@ -51,15 +51,15 @@ class SKKU_SENTIMENT:
         self.learning_rate = float(params["modellr"])
 
         # Pretrained Model Download
-        localrootPath = "C:/arspraxiabucket/"
+        localrootPath = self.args.path_local_root
         model_path = ""
         modelidx = params["pretrained_model"]
         if int(modelidx) == 0:
-            model_path = "monologg/koelectra-small-v3-discriminator"
+            model_path = self.args.pretrained_model
         else:
             model_path = localrootPath+"model/"+modelidx+"/"  
             modelsrcList = []
-            my_bucket = s3r.Bucket('arspraxiabucket')
+            my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
             for my_bucket_object in my_bucket.objects.all():
                 filesrc = my_bucket_object.key.split('.')
                 
@@ -73,20 +73,20 @@ class SKKU_SENTIMENT:
                         modelsrcList.append(filesrc[0] + "." + filesrc[1])
 
             for modelsrc in modelsrcList:
-                s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)  
+                s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
 
         self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
         self.currentStep = 2    # Finished downloading model
 
         # Train Data Download
-        tdfilePath = "data/sa/train/"
+        tdfilePath = self.args.path_train_data
         tdRemotefileSrc = tdfilePath+params["train_data"]
         tdLocalfilePath = localrootPath+tdfilePath
         tdLocalfileSrc = tdLocalfilePath+params["train_data"]
         if not os.path.exists(tdLocalfilePath):
            os.makedirs(tdLocalfilePath)
 
-        s3c.download_file('arspraxiabucket', tdRemotefileSrc, tdLocalfileSrc)
+        s3c.download_file(project.settings.AWS_BUCKET_NAME, tdRemotefileSrc, tdLocalfileSrc)
         self.data_path = tdLocalfileSrc
 
         fileExtention = params["train_data"].split(".")[1]
@@ -167,7 +167,7 @@ class SKKU_SENTIMENT:
         else:
             last_data = NLP_models.objects.order_by("id").last()
             model_new_idx = last_data.id+1
-        output_dir = "C:/arspraxiabucket/model/"+str(model_new_idx)
+        output_dir = self.args.path_local_root+"model/"+str(model_new_idx)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -176,9 +176,9 @@ class SKKU_SENTIMENT:
         )
         model_to_save.save_pretrained(output_dir)
 
-        torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+        torch.save(self.args, os.path.join(output_dir, self.args.file_args_bin))
 
-        filelist = ["config.json", "pytorch_model.bin", "training_args.bin"]
+        filelist = [self.args.file_config_json, self.args.file_model_bin, self.args.file_args_bin]
 
         # Get model size
         self.model_size = 0
@@ -192,9 +192,9 @@ class SKKU_SENTIMENT:
             fileuploadname = "model/"+str(model_new_idx)+"/"+file
             with open(os.path.join(output_dir, file), "rb") as f:
                 s3c.upload_fileobj(
-                        f,
-                        'arspraxiabucket',
-                        fileuploadname
+                    f,
+                    project.settings.AWS_BUCKET_NAME,
+                    fileuploadname
                 )
 
         # Delete temp local file
@@ -227,7 +227,6 @@ class SKKU_SENTIMENT:
 
 
     def setInferenceAttr(self, params):
-        self.args = loadJSON()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model)
 
@@ -236,12 +235,12 @@ class SKKU_SENTIMENT:
         model_path = ""
         modelidx = params["inference_model"]
         if int(modelidx) == 0:
-            model_path = "monologg/koelectra-small-v3-discriminator"
+            model_path = self.args.pretrained_model
         else:
-            localrootPath = "C:/arspraxiabucket/"
+            localrootPath = self.args.path_local_root
             model_path = localrootPath+"model/"+modelidx+"/"  
             modelsrcList = []
-            my_bucket = s3r.Bucket('arspraxiabucket')
+            my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
             for my_bucket_object in my_bucket.objects.all():
                 filesrc = my_bucket_object.key.split('.')
                 
@@ -255,20 +254,20 @@ class SKKU_SENTIMENT:
                         modelsrcList.append(filesrc[0] + "." + filesrc[1])
 
             for modelsrc in modelsrcList:
-                s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)  
+                s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
 
         self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
         self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, function_to_apply=self.args.function_to_apply, device=0)
 
         # Inference Data Download        
-        tdfilePath = "data/sa/inf/"
+        tdfilePath = self.args.path_inf_data
         tdRemotefileSrc = tdfilePath+params["inference_data"]
         tdLocalfilePath = localrootPath+tdfilePath
         tdLocalfileSrc = tdLocalfilePath+params["inference_data"]
         if not os.path.exists(tdLocalfilePath):
            os.makedirs(tdLocalfilePath)
 
-        s3c.download_file('arspraxiabucket', tdRemotefileSrc, tdLocalfileSrc)
+        s3c.download_file(project.settings.AWS_BUCKET_NAME, tdRemotefileSrc, tdLocalfileSrc)
         self.data_path = tdLocalfileSrc
 
 
@@ -288,18 +287,31 @@ class SKKU_SENTIMENT:
                 self.inf_result.append([line[0], sent_result, 0.77])
 
         # Save inference result        
-        inf_result_path = "C:/arspraxiabucket/data/sa/result/"
+        inf_result_path = self.args.path_local_root+self.args.path_result_data
         if not os.path.exists(inf_result_path):
             os.makedirs(inf_result_path)
         inf_result_list = self.getInfResult()    
         now = str(datetime.now())
         now = now.replace(':','.')
         now = now[:19]
-        filename_str = inf_result_path+now+".csv"
+        self.result_file_name = now+".csv"
+        filename_str = inf_result_path+self.result_file_name
+
+        # Save inference result in local path
         with open(filename_str, 'w', encoding="utf-8", newline="") as f:
             wr = csv.writer(f)
             for i in inf_result_list:
-                    wr.writerow(i)
+                wr.writerow(i)
+
+
+        # Save inference result in AWS     
+        fileuploadname = self.args.path_result_data+self.result_file_name
+        with open(filename_str, "r", encoding="utf-8") as f:
+            s3c.upload_fileobj(
+                f,
+                project.settings.AWS_BUCKET_NAME,
+                fileuploadname
+            )
 
 
     def getInfResult(self):
@@ -333,6 +345,10 @@ class SKKU_SENTIMENT:
     def getCurrentEpoch(self):
         return self.currentEpoch
 
+    
+    def getResultFileName(self):
+        return self.result_file_name
+
 
     def isTrainFinished(self):
         return self.trainFinished
@@ -356,20 +372,20 @@ class SentimentReviewDataset(Dataset):
 
         inputs = self.tokenizer(
             text, 
-            return_tensors='pt',
+            return_tensors=self.args.return_tensors,
             truncation=True,
             max_length=256,
             pad_to_max_length=True,
             add_special_tokens=True
         )
 
-        input_ids = inputs['input_ids'][0]
-        attention_mask = inputs['attention_mask'][0]
+        input_ids = inputs[self.args.input_ids][0]
+        attention_mask = inputs[self.args.attention_mask][0]
 
         return input_ids, attention_mask, y
 
 
 def loadJSON():
-    with open('./config/config_sa.json', encoding="UTF-8") as f:
+    with open(project.settings.SA_JSON_PATH, encoding="UTF-8") as f:
         args = AttrDict(json.load(f))	
     return args

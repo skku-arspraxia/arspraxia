@@ -327,10 +327,10 @@ class SKKU_NER:
 
         #
         # f1, precision, recall 저장
-        # self.f1score = 0
-        # self.accuracy = 0
-        # self.precesion = 0
-        # self.recall = 0
+        self.f1score = results["f1"]
+        self.accuracy = results["accuracy"]
+        self.precision = results["precision"]
+        self.recall = result["recall"]
         #
     
     def setInferenceAttr(self, params):        
@@ -383,8 +383,7 @@ class SKKU_NER:
             self.model = AutoModelForTokenClassification.from_pretrained(model_path)
       
         self.ner = NerPipeline(model=self.model, tokenizer=self.tokenizer, ignore_labels=[], ignore_special_tokens=True)   
-        self.model.to(self.device)
-
+        
         # Inference Data Download  
         localrootPath = "C:/arspraxiabucket/"      
         tdfilePath = "data/ner/inf/"
@@ -627,14 +626,14 @@ def custom_encode_plus(sentence,
     ids = tokenizer.convert_tokens_to_ids(tokens)
     len_ids = len(ids)
     total_len = len_ids + tokenizer.num_special_tokens_to_add()
-    if tokenizer.max_len and total_len > tokenizer.max_len:
+    """ if tokenizer.max_len and total_len > tokenizer.max_len:
         ids, _, _ = tokenizer.truncate_sequences(
             ids,
             pair_ids=None,
             num_tokens_to_remove=total_len - tokenizer.max_len,
             truncation_strategy="longest_first",
             stride=0,
-        )
+        ) """
 
     sequence = tokenizer.build_inputs_with_special_tokens(ids)
     token_type_ids = tokenizer.create_token_type_ids_from_sequences(ids)
@@ -700,7 +699,7 @@ class NerPipeline(Pipeline):
         self.ignore_special_tokens = ignore_special_tokens
 
     def __call__(self, *texts, **kwargs):
-        inputs = self._args_parser(*texts, **kwargs)
+        inputs = [*texts]
         answers = []
         for sentence in inputs:
 
@@ -763,7 +762,7 @@ class NerPipeline(Pipeline):
 
         
     def _sanitize_parameters(self, **pipeline_parameters):
-        pass
+        return None, None, None
 
     def preprocess(self, **pipeline_parameters):
         pass
