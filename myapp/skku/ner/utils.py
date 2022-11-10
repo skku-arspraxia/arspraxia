@@ -138,15 +138,13 @@ def f1_pre_rec(labels, preds, is_ner=True):
         return {
             "precision": seqeval_metrics.precision_score(labels, preds, suffix=True),
             "recall": seqeval_metrics.recall_score(labels, preds, suffix=True),
-            "f1": seqeval_metrics.f1_score(labels, preds, suffix=True),
-            "accuracy" : seqeval_metrics.accuracy_score(labels, preds, suffix=True),
+            "f1": seqeval_metrics.f1_score(labels, preds, suffix=True)
         }
     else:
         return {
             "precision": sklearn_metrics.precision_score(labels, preds, average="macro"),
             "recall": sklearn_metrics.recall_score(labels, preds, average="macro"),
-            "f1": sklearn_metrics.f1_score(labels, preds, average="macro"),
-            "accuracy" : seqeval_metrics.accuracy_score(labels, preds, average="macro"),
+            "f1": sklearn_metrics.f1_score(labels, preds, average="macro")
         }
 
 

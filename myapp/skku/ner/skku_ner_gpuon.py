@@ -59,7 +59,6 @@ class SKKU_NER:
         self.currentStep = 1
         self.currentEpoch = 0
         self.f1score = 0
-        self.accuracy = 0
         self.precesion = 0
         self.recall = 0
 
@@ -325,14 +324,11 @@ class SKKU_NER:
         result = compute_metrics(self.args.task, out_label_list, preds_list)
         results.update(result)
 
-        #
-        # f1, precision, recall 저장
         self.f1score = results["f1"]
-        self.accuracy = results["accuracy"]
         self.precision = results["precision"]
         self.recall = result["recall"]
-        #
     
+
     def setInferenceAttr(self, params):        
         self.args = loadJSON()
         set_seed(self.args)
@@ -403,11 +399,14 @@ class SKKU_NER:
         if not os.path.exists(inf_result_path):
             os.makedirs(inf_result_path)  
         now = str(datetime.now())
-        now = now.replace(':','.')
-        now = now[:19]
-        outputpath =  inf_result_path+now+".csv"
-        outputfile = open(outputpath, 'w', encoding='utf-8', newline='')
+        now = now.replace(':','')
+        now = now.replace('-','')
+        now = now.replace(' ','')
+        now = now[:14]
+        self.result_file_name = now+".csv"
+        outputpath =  inf_result_path+self.result_file_name
 
+        outputfile = open(outputpath, 'w', encoding='utf-8', newline='')
         wr = csv.writer(outputfile)
         lines = inputfile.readlines()
         for line in lines:
@@ -420,6 +419,14 @@ class SKKU_NER:
         inputfile.close()
         outputfile.close()
 
+        # Save inference result in AWS     
+        fileuploadname = self.args.path_result_data+self.result_file_name
+        with open(outputpath, "rb") as f:
+            s3c.upload_fileobj(
+                f,
+                project.settings.AWS_BUCKET_NAME,
+                fileuploadname
+            )
     
     def getModelsize(self):
         return self.model_size
@@ -427,10 +434,6 @@ class SKKU_NER:
 
     def getF1score(self):
         return self.f1score
-
-
-    def getAccuracy(self):
-        return self.accuracy
 
 
     def getPrecision(self):
@@ -447,6 +450,10 @@ class SKKU_NER:
     
     def getCurrentEpoch(self):
         return self.currentEpoch
+
+    
+    def getResultFileName(self):
+        return self.result_file_name
 
 
     def isTrainFinished(self):
