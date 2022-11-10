@@ -39,11 +39,12 @@ s3r = boto3.resource(
     aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
 )
 
-class SKKU_SENTIMENT:
+class SKKU_SA:
     def __init__(self):
         self.trainFinished = False
         self.currentStep = 1
         self.currentEpoch = 0
+        self.result_file_name = "test.csv"
 
     def setTrainAttr(self, params):
         self.args = loadJSON()
@@ -213,13 +214,17 @@ class SKKU_SENTIMENT:
         self.currentEpoch += 1
         return self.currentEpoch
 
+    
+    def getResultFileName(self):
+        return self.result_file_name
+
 
     def isTrainFinished(self):
         return self.trainFinished
 
 
 def loadJSON():
-    with open('./config/config_sa.json', encoding="UTF-8") as f:
+    with open(project.settings.SA_JSON_PATH, encoding="UTF-8") as f:
         args = AttrDict(json.load(f))	
     return args
 

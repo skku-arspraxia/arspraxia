@@ -1,48 +1,8 @@
 {% load static %}
-
         </main>
       </div>
     </div>
     <script src="{% static 'js/feather.min.js' %}"></script>
     <script src="{% static 'js/dashboard.js' %}"></script>
-    <script>
-
-        $(document).ready(function(){
-            noBack();
-            // 좌측 네비 스타일
-            $(".nav-link").removeClass("active");
-            $("li.nav-item:nth-child("+$("input.pageno").val()+") .nav-link").addClass("active");
-
-            // 페이지 상단 타이틀
-            $("h4.alert-heading").text($("input.pagetitle").val());
-
-            // Task 버튼
-            $(".taskbtn[data-task="+$("input.task").val()+"]").addClass("active");
-            $(".taskbtn").click(function(){
-                if(!$(this).hasClass("active")){
-                  var task = $(this).data("task");
-                  $("input.task").val(task);
-                  $(".taskform").submit();
-                }
-            });
-
-        });
-
-        function modalShow(msg){
-          $(".modal-body").html(msg);
-          $("#msg_popup").modal("show");
-        }
-
-        function modalHide(){
-          $("#msg_popup").modal("hide");
-        }
-        
-        function noBack(){
-          window.history.forward();
-        }
-        
-        window.history.forward();
-
-    </script>
   </body>
 </html>

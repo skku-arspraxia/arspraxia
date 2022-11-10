@@ -1,22 +1,18 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block mycontent %}
-
-
-    <input type="hidden" class="pagetitle" value="Models"/>
-    <input type="hidden" class="pageno" value="4"/>
-    
+{% block mycontent %}  
     <div class="row g-3">
         <div class="container">
             <table class="table table-light table-striped" style="text-align:center;">
                 <thead>
                     <tr>
-                        <th style="width:5%;">번호</th>
-                        <th style="width:45%;">모델이름</th>
-                        <th style="width:10%;">용량</th>
-                        <th style="width:10%;">정확도</th>
-                        <th style="width:20%;">학습날짜</th>
-                        <th style="width:10%;">상세보기</th>
+                        <th style="width:5%;">No</th>
+                        <th style="width:30%;">Name</th>
+                        <th style="width:10%;">Epoch</th>
+                        <th style="width:10%;">Batch Size</th>
+                        <th style="width:10%;">Learning Rate</th>
+                        <th style="width:10%;">F1 Score</th>
+                        <th style="width:10%;">Size</th>
+                        <th style="width:15%;">학습날짜</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -24,12 +20,12 @@
                         <tr>
                             <td>{{ forloop.counter | add:startIdx }}</td>
                             <td>{{ data.model_name }}</td>
+                            <td>{{ data.epoch }}</td>
+                            <td>{{ data.batch_size }}</td>
+                            <td>{{ data.learning_rate }}</td>
+                            <td>{{ data.f1 }}%</td>
                             <td>{{ data.volume }} MB</td>
-                            <td>{{ data.accuracy }} %</td>
                             <td>{{ data.date | date:"Y년 m월 d일" }}</td>
-                            <td>
-                                <button onclick="window.open('/modelPopup/?id={{data.id}}','window_name','width=700,height=1000');">보기</button>
-                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -68,6 +64,5 @@
                 </li>
             {% endif %}
         </ul>
-    </div>
-    
+    </div>    
 {% endblock %}

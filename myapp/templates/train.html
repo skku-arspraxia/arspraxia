@@ -1,11 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
 {% block mycontent %}
-
-
-    <input type="hidden" class="pagetitle" value="Train"/>
-    <input type="hidden" class="pageno" value="2"/>
-
     <div class="row g-3">
         <div class="col-sm-6">
             <label for="modelname" class="form-label">Model Name</label>
@@ -38,10 +32,10 @@
         </div>
         <div class="col-md-12">
             <label for="dataSrc" class="form-label">Data Set</label>
-            {% if datalist %}
+            {% if data_list %}
                 <select id="dataSrc" class="form-select hyperparam">
                     <option hidden="" value="-1">데이터를 선택해주세요</option>
-                        {% for data in datalist %}
+                        {% for data in data_list %}
                             <option value="{{forloop.counter}}">{{ data }}</option>
                         {% endfor %}    
                 </select>            
@@ -56,28 +50,17 @@
             <textarea class="form-control hyperparam" id="modeldes" name="modeldes" placeholder="추가 설명을 입력해주세요" maxlength="2000" value=""></textarea>
         </div>
     </div>
-
     <hr class="my-4">
-
-    <button class="w-100 btn btn-primary btn-lg trainstart" type="button" onclick="startTraining(this);">Start Training</button>
-
+    <button class="w-100 btn btn-primary btn-lg mlstart" type="button" onclick="startTraining(this);">
+        <span class="button__text">
+            Start Training
+        </span>
+    </button>    
     <div class="status" style="display:none;margin-top:50px;"></div>
 
-    <div class="container" style="display:none;">
-        <img src="{% static 'img/tmp/train.png' %}" style="width:100%;height:auto;"/>
-    </div>
-
     <script>
-        $(document).ready(function(){
-            $(".hpnum").onkeydown = function(e) {
-                if(!((e.keyCode > 95 && e.keyCode < 106) || (e.keyCode > 47 && e.keyCode < 58) || e.keyCode == 8)) {
-                    return false;
-                }
-            };
-        });
-
+        var isTrainStart = 0;
         function startTraining(_this){
-            //$(".container").show();
             if($("#modelname").val() == ""){
                 modalShow("모델 이름을 입력해주세요.");
                 return;
@@ -103,29 +86,28 @@
                 return;
             }
 
-            $(".hyperparam, .trainstart").attr("disabled", true);
-
             var param = {
-                    "task" : $("#task").val(),
-                    "modelname" : $("#modelname").val(),
-                    "modelepoch" : Math.round($("#modelepoch").val()),
-                    "modellr" : $("#modellr").val(),
-                    "modelbs" : Math.round($("#modelbs").val()),
-                    "modeldes" : $("#modeldes").val(),
-                    "pretrained" : parseInt($("#pretrained option:selected").val()),
-                    "dataSrc" : $("#dataSrc option:selected").text(),
-            };                       
+                "task" : $("#task").val(),
+                "modelname" : $("#modelname").val(),
+                "modelepoch" : Math.round($("#modelepoch").val()),
+                "modellr" : $("#modellr").val(),
+                "modelbs" : Math.round($("#modelbs").val()),
+                "modeldes" : $("#modeldes").val(),
+                "pretrained" : parseInt($("#pretrained option:selected").val()),
+                "dataSrc" : $("#dataSrc option:selected").text(),
+            };
 
+            $(".hyperparam, .mlstart").attr("disabled", true);
+            $(_this).addClass("button__loader");
+            $(".button__text").html("Training....");
+
+            isTrainStart = 1;
             $.ajax({
                 url : "/trainStartAjax/",
                 type : "GET",
                 data : param,
                 dataType : "json",
-                success : function(data) {
-                    clearInterval(statusInterval);
-                    $(".status").hide();
-                    
-                    $(".hyperparam, .trainstart").attr("disabled", false);
+                success : function(data) {     
                     $("#modelname").val("");
                     $("#modelepoch").val("");
                     $("#modellr").val("");
@@ -137,10 +119,15 @@
                     modalShow("모델 학습이 성공적으로 완료되었습니다.");
                 },
                 error : function(e) {
-                    clearInterval(statusInterval);
-                    $(".status").hide();
                     modalShow("모델 학습이 실패했습니다.");
-                    console.log("error :" + e.response);
+                },
+                complete : function(e){
+                    //clearInterval(statusInterval);
+                    //$(".status").hide();
+                    $(".hyperparam, .mlstart").attr("disabled", false);
+                    $(".mlstart").removeClass("button__loader");        
+                    $(".button__text").html("Start Training");
+                    isTrainStart = 0;
                 }
             });
 
@@ -191,9 +178,14 @@
                         console.log("error :" + e.response);
                     }
                 });
-            }  
+            }
         }
-
+        $(document).ready(function(){
+            $(".hpnum").onkeydown = function(e) {
+                if(!((e.keyCode > 95 && e.keyCode < 106) || (e.keyCode > 47 && e.keyCode < 58) || e.keyCode == 8)) {
+                    return false;
+                }
+            };
+        });
     </script>
-
 {% endblock %}

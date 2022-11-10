@@ -1,25 +1,23 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block mycontent %}
-
-    <input type="hidden" class="pagetitle" value="Data"/>
-    <input type="hidden" class="pageno" value="1"/>
-    
+{% block mycontent %}  
     <form action="/data/" method="GET" class="dataform">
         <input type="hidden" name="task" class="task" value="{{task}}"/>
-        <input type="hidden" name="fileName" class="fileName" value="{{fileName}}"/>
+        <input type="hidden" name="data_type" class="data_type" value="{{data_type}}"/>
+        <input type="hidden" name="fileName" class="fileName" value="{{file_name}}"/>
     </form>
-
     <div class="row g-3">
+        <section class="datatype_wrapper">
+            <div><input class="datatype_radio" type="radio" value="train" id="data_type_train" name="data_type" {% if data_type == "train"%}checked{% endif %}/><label for="data_type_train">학습 데이터</label></div>
+            <div><input class="datatype_radio" type="radio" value="inf" id="data_type_inf" name="data_type" {% if data_type == "inf"%}checked{% endif %}/><label for="data_type_inf">추론 데이터</label></div>
+            <div><input class="datatype_radio" type="radio" value="result" id="data_type_result" name="data_type" {% if data_type == "result"%}checked{% endif %}/><label for="data_type_result">추론 결과 데이터</label></div>                                             
+        </section>
         <div class="col-md-12">
-            <label class="form-label label-data" for="dataSrc">
-                Data Set
-                <a class="a-dataUpload" onclick="window.open('/dataUpload/?task={{task}}','','width=400,height=400');">[데이터 업로드]</a>
-            </label>
-            {% if datalist %}
+            <label class="form-label" for="dataSrc">Data Set</label>            
+            <a class="data_upload" onclick="window.open('/uploadFile/?task={{task}}','','width=400,height=400');">[데이터 업로드]</a>
+            {% if data_list %}
                 <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
                     <option hidden="" value="0">데이터를 선택해주세요</option>
-                        {% for data in datalist %}
+                        {% for data in data_list %}
                             <option value="{{forloop.counter}}">{{ data }}</option>
                         {% endfor %}    
                 </select>            
@@ -30,34 +28,53 @@
             {% endif %}
         </div>
     </div>
-
     <hr class="my-4">
 
     {% if page_obj %}
-        <div class="container">
-            <button type="button" class="btn btn-primary" name="uploadbutton" style="float:right;margin-bottom: 20px;" onclick="download();">데이터 다운로드</button>
+        <div class="data_container">
+            <a href="/downloadFile?task={{task}}&type={{data_type}}&fileName={{file_name}}" class="btn btn-primary" style="float:right;margin-bottom: 20px;">데이터 다운로드</a>
             <table class="table table-light table-striped" style="text-align:center;">
                 <thead>
                     <tr>
                         <th style="width:10%;">번호</th>
-                        {% if task == 'ner'%}
-                            <th style="width:60%;">문장</th>
-                            <th style="width:30%;">분류</th>
-                        {% elif task == 'sa' %}
-                            <th style="width:75%;">문장</th>
-                            <th style="width:15%;">분류</th>
+                        {% if data_type == 'train' %}
+                            {% if task == 'ner'%}
+                                <th style="width:60%;">문장</th>
+                                <th style="width:30%;">분류</th>
+                            {% elif task == 'sa' %}
+                                <th style="width:75%;">문장</th>
+                                <th style="width:15%;">분류</th>
+                            {% endif %}
+                        {% elif data_type == 'inf' %}
+                            <th style="width:90%;">문장</th>
+                        {% elif data_type == 'result' %}
+                            {% if task == 'ner'%}
+                                <th style="width:60%;">문장</th>
+                                <th style="width:30%;">분류</th>
+                            {% elif task == 'sa' %}
+                                <th style="width:75%;">문장</th>
+                                <th style="width:15%;">분류</th>
+                            {% endif %}
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for data in page_obj %}
                         <tr>
-                            <td>{{ forloop.counter | add:startIdx }}</td>
+                            <td>{{ forloop.counter | add:start_idx }}</td>
                             <td>{{ data.text }}</td>
-                            {% if task == 'ner'%}
-                                <td style="text-align:left;">{{ data.classification }}</td>
-                            {% elif task == 'sa' %}
-                                <td>{{ data.classification }}</td>
+                            {% if data_type == 'train'%}
+                                {% if task == 'ner'%}
+                                    <td style="text-align:left;">{{ data.classification }}</td>
+                                {% elif task == 'sa' %}
+                                    <td>{{ data.classification }}</td>
+                                {% endif %}
+                            {% elif data_type == 'result'%}
+                                {% if task == 'ner'%}
+                                    <td style="text-align:left;">{{ data.classification }}</td>
+                                {% elif task == 'sa' %}
+                                    <td>{{ data.classification }}</td>
+                                {% endif %}
                             {% endif %}
                         </tr>
                     {% endfor %}
@@ -68,7 +85,7 @@
             <ul class="pagination justify-content-center" style="margin-top: 2rem;">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_obj.previous_page_number}}">이전</a>
+                        <a class="page-link" href="/data/?task={{task}}&data_type={{data_type}}&fileName={{file_name}}&page={{page_obj.previous_page_number}}">이전</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">
@@ -78,17 +95,17 @@
                 {% for page_number in page_range %}
                     {% if page_number == page_obj.number %}
                         <li class="page-item active" aria-current="page">
-                            <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_number}}">{{ page_number }}</a>
+                            <a class="page-link" href="/data/?task={{task}}&data_type={{data_type}}&fileName={{file_name}}&page={{page_number}}">{{ page_number }}</a>
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_number}}">{{ page_number }}</a>
+                            <a class="page-link" href="/data/?task={{task}}&data_type={{data_type}}&fileName={{file_name}}&page={{page_number}}">{{ page_number }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="/data/?task={{task}}&fileName={{fileName}}&page={{page_obj.next_page_number}}">다음</a>
+                        <a class="page-link" href="/data/?task={{task}}&data_type={{data_type}}&fileName={{file_name}}&page={{page_obj.next_page_number}}">다음</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">
@@ -107,56 +124,17 @@
                 $(".dataform").submit();
             }
         }
-
-        function download(){
-            var param = {
-                'task' : $(".task").val(),
-                'fileName' : $(".fileName").val()
-            }
-            $.ajax({
-                type : "POST",
-                enctype: 'multipart/form-data',
-                url : "/dataDownloadAjax/",
-                headers: {"X-CSRFToken": '{{csrf_token}}'},
-                data : JSON.stringify(param),
-                processData : false,
-                contentType : false,
-                success : function(data){     
-                    modalShow("파일 다운로드에 성공했습니다.");
-                },
-                error : function(data){
-                    modalShow("파일 다운로드에 실패했습니다.");
-                }
-            });
-        }
-
         $(document).ready(function(){
             $("#dataSrc option").each(function(){
-                if($(this).text() == '{{fileName}}'){
+                if($(this).text() == '{{file_name}}'){
                     $(this).attr("selected", true);
                 }
             });
+
+            $(".datatype_radio").click(function(){
+                var datatype = $(this).val();
+                location.href = "/data/?task={{task}}&data_type="+datatype;
+            });
         });
-
     </script>
-
-    <style>
-        .label-data{
-            position: relative;
-            width: 100%;
-        }
-        .a-dataUpload{
-            position: absolute;
-            right: 0;
-            cursor:pointer;
-        }
-        .container{
-            max-width: 100%;
-            text-align: center;
-        }
-        .container table tr td:nth-child(2){
-            text-align: left;
-        }
-    </style>
-
 {% endblock %}

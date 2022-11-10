@@ -1,0 +1,205 @@
+html, body{
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+a{
+	text-decoration: none;
+}
+ul, li{
+	list-style: none;
+}
+.ls-05{
+	letter-spacing: -0.5px;
+}
+.ls-1{
+	letter-spacing: -1px;
+}
+.mt_10{
+    margin-top: 10px;
+}
+.mt_20{
+    margin-top: 20px;
+}
+.mb_10{
+    margin-bottom: 10px;
+}
+.mb_20{
+    margin-bottom: 20px;
+}
+
+/* Login Page */
+.gradient-custom {
+    background: #6a11cb;
+    background: -webkit-linear-gradient(to right, rgba(106, 17, 203, 1), rgba(37, 117, 252, 1));
+    background: linear-gradient(to right, rgba(106, 17, 203, 1), rgba(37, 117, 252, 1))
+}
+
+/* Data Page */
+.data_upload{
+    float:right;
+    cursor:pointer;
+    text-decoration: none;
+}
+.data_container{
+    max-width: 100%;
+    text-align: center;
+}
+.data_container table tr td:nth-child(2){
+    text-align: left;
+}
+.datatype_wrapper{
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 25%;
+}
+.datatype_wrapper > div{
+    display: inline-block;
+}
+.datatype_wrapper input{
+    vertical-align: middle;
+    cursor: pointer;
+}
+.datatype_wrapper label{
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+/* Train. Inference Page */
+.mlstart{
+    height: 50px;
+}
+.mlstart > span{
+    font-size: 17px;
+}
+:root {
+    --first-color: hsl(231, 44%, 56%);
+    --first-color-alt: hsl(231, 44%, 51%);
+    --text-color: hsl(231, 12%, 98%);
+}
+.button__loader {
+    border: none;
+    outline: none;
+    position: relative;
+    padding: .5rem 1rem;
+    background-color: var(--first-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    border-radius: .5rem;
+    box-shadow: 0 18px 40px hsla(231, 56%, 56%, .3);
+    overflow: hidden;
+    cursor: wait;
+}
+.button__loader::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150%;
+    height: 100%;
+    background: repeating-linear-gradient(60deg, 
+                transparent, 
+                transparent 0.75rem, 
+                var(--first-color-alt) 0.75rem, 
+                var(--first-color-alt) 1.5rem);
+    animation: load 1s infinite linear;
+}
+.button__text {
+    position: relative;
+}
+@keyframes load {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-1.75rem);
+    }
+}
+
+/* File Upload Popup */
+.upload_frame{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    box-shadow: 4px 8px 16px 0 rgba(0, 0, 0, 0.1);
+    background:  #ececec;
+    color: #333;
+    font-family: "Open Sans", Helvetica, sans-serif;
+}
+.upload_center{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    padding: 20px;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    border-radius: 3px;
+    box-shadow: 8px 10px 15px 0 rgba(0, 0, 0, 0.2);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-direction: column;
+}
+.upload_center .inner{
+    position: relative;
+    width: 260px;
+    height: 100%;
+    margin: 0 auto;
+}
+.upload_center .inner > section{
+    width: 100%;
+}
+.upload_datatype_wrapper,
+.upload_btn_wrapper{
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+}
+.upload_datatype_wrapper > div{
+    display: inline-block;
+}
+.upload_datatype_wrapper input{
+    vertical-align: middle;
+}
+.upload_datatype_wrapper label{
+    margin-left: 5px;
+}
+.upload_dropzone{
+    position: relative;
+    height: 200px;
+    border: 1px dashed #999;
+    border-radius: 3px;
+    text-align: center;
+}
+.upload_dropzone .upload_icon{
+    margin-top: 80px;
+}
+.upload_dropzone .upload_ment{
+    font-size: 12px;
+    color: #999;
+}
+.upload_dropzone .upload_input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+}
+.upload_dropzone .upload_list{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    overflow-y: scroll;            
+}
+.upload_dropzone .upload_list p{
+    margin: 0;
+    text-align: left;
+}

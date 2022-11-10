@@ -431,6 +431,6 @@ class NerPipeline(Pipeline):
 
 
 def loadJSON():
-    with open("./nermodel_before_train/config_ner.json", encoding="UTF-8") as f:
+    with open(project.settings.NER_JSON_PATH, encoding="UTF-8") as f:
         args = AttrDict(json.load(f))	
     return args

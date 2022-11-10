@@ -30,5 +30,9 @@
   "save_steps": 2188,
   "learning_rate": 5e-5,
   "num_labels": 9,
-  "test_size": 0.2
+  "test_size": 0.2,
+  "path_local_root" : "C:/arspraxiabucket/",
+  "path_train_data" : "data/ner/train/",
+  "path_inf_data" : "data/ner/inf/",
+  "path_result_data" : "data/ner/result/"
 }
