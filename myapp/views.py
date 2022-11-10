@@ -365,6 +365,7 @@ def inferenceStartAjax(request):
         skku_ner = SKKU_NER()
         skku_ner.setInferenceAttr(params)
         skku_ner.inference()
+        result_file_name = skku_ner.getResultFileName()
 
     context = {
             "result" : "success",

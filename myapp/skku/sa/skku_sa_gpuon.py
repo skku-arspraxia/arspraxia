@@ -15,7 +15,6 @@ from attrdict import AttrDict
 from tqdm.notebook import tqdm
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Dataset
-from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
@@ -219,7 +218,6 @@ class SKKU_SA:
                     y_pred.append(idx)
 				
         self.runtime = time.time() - start
-        self.accuracy = accuracy_score(y_true, y_pred)
         self.precesion = precision_score(y_true, y_pred, average="micro")
         self.recall =recall_score(y_true, y_pred, average="micro")
         self.f1score = f1_score(y_true, y_pred, average="micro")
@@ -292,8 +290,10 @@ class SKKU_SA:
             os.makedirs(inf_result_path)
         inf_result_list = self.getInfResult()    
         now = str(datetime.now())
-        now = now.replace(':','.')
-        now = now[:19]
+        now = now.replace(':','')
+        now = now.replace('-','')
+        now = now.replace(' ','')
+        now = now[:14]
         self.result_file_name = now+".csv"
         filename_str = inf_result_path+self.result_file_name
 
@@ -306,7 +306,7 @@ class SKKU_SA:
 
         # Save inference result in AWS     
         fileuploadname = self.args.path_result_data+self.result_file_name
-        with open(filename_str, "r", encoding="utf-8") as f:
+        with open(filename_str, "rb") as f:
             s3c.upload_fileobj(
                 f,
                 project.settings.AWS_BUCKET_NAME,
@@ -324,10 +324,6 @@ class SKKU_SA:
 
     def getF1score(self):
         return self.f1score
-
-
-    def getAccuracy(self):
-        return self.accuracy
 
 
     def getPrecision(self):
