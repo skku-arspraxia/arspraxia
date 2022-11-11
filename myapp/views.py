@@ -3,11 +3,7 @@ import boto3
 import project.settings
 import pandas as pd
 import shutil
-import chardet
-import urllib
 import mimetypes
-import schedule
-import time
 from django.http import HttpResponse
 from urllib.parse import quote
 from django.shortcuts import render, redirect
@@ -121,6 +117,7 @@ def data(request):
         elif file_extention == "xls" or file_extention == "xlsx":
                 df = pd.read_excel(file_src)
 
+        obj_index = 1
         board_list = []
         for board in df.values.tolist():
             if data_type == "train":
@@ -128,7 +125,11 @@ def data(request):
             elif data_type == "inf":
                 board_list.append({"text":board[0]})
             elif data_type == "result":
-                board_list.append({"text":board[0], "classification":board[1]})
+                if task == "ner":
+                    board_list.append({"text":board[0], "tagtoken":zip(board[1].split(" "), board[0].split(" ")), "length":len(board[1].split(" ")), "index":obj_index })
+                    obj_index += 1
+                else:
+                    board_list.append({"text":board[0], "classification":board[1], "score":board[2]})
             
         # board_list -> Paginator
         paginator = Paginator(board_list, "30")
@@ -185,29 +186,6 @@ def train(request):
         "page_no" : 2
     }
     return render(request, "train.html", context)
-        
-
-train_current_step = 0
-train_current_epoch = 0
-def trainGetStatusAjax(request):
-    if logincheck(request):
-        return redirect("/login/")
-
-    global train_current_step
-    global train_current_epoch
-    
-    context = {
-        "train_current_step" : train_current_step,
-        "train_current_epoch" : train_current_epoch
-    }
-    return JsonResponse(context)
-
-
-def skku_sa_status(step, epoch):
-    global train_current_step
-    global train_current_epoch
-    train_current_step = step
-    train_current_epoch = epoch
 
 
 def trainStartAjax(request):
@@ -222,28 +200,12 @@ def trainStartAjax(request):
         "modellr" : request.GET.get("modellr"),
     }
 
-    global train_current_step
-    global train_current_epoch
-    train_current_step = 0
-    train_current_epoch = 0
-    tempCheck = False
-
     if project.settings.ISGPUON:
         task = request.GET.get("task")
         if task == "sa":
             skku_sa = SKKU_SA()
             skku_sa.setTrainAttr(params)
-            skku_sa.train()
-            """
-            schedule.every(1).seconds.do(skku_sa_status, skku_sa.getCurrentStep(), skku_sa.getCurrentEpoch())  
-            while skku_sa.isTrainFinished() == False:
-                schedule.run_pending()
-                time.sleep(1)
-                while tempCheck == False:
-                    skku_sa.setTrainAttr(params)
-                    skku_sa.train()
-                    tempCheck = True     
-            """        
+            skku_sa.train()   
         elif task == "ner":
             skku_ner = SKKU_NER()
             skku_ner.setTrainAttr(params)
@@ -328,7 +290,7 @@ def inference(request):
                 board_list.append({"text":board[0], "tagtoken":zip(board[1].split(" "), board[0].split(" ")), "length":len(board[1].split(" ")), "index":obj_index })
                 obj_index += 1
             elif task == "sa":
-                board_list.append({"text":board[0], "classification":board[1], "score":"temp"})
+                board_list.append({"text":board[0], "classification":board[1], "score":board[2]})
             
         # board_list -> Paginator
         paginator = Paginator(board_list, "10")
@@ -475,8 +437,6 @@ def downloadFile(request):
     if os.path.exists(local_file_src):
         file = open(local_file_src, "rb")
         response = HttpResponse(file.read(), content_type=mimetypes.guess_type(local_file_src)[0])
-        #response["Content-Disposition"] = 'attachment; filename*=UTF-8\'\'%s' % urllib.parse.quote(file_name).encode('utf-8')
-        #response = HttpResponse(file.read(), content_type="application/octet-stream; charset=utf-8")
         response["Content-Disposition"] = "attachment; filename=" + os.path.basename(local_file_src)
         return response
     else:
@@ -495,3 +455,4 @@ def page500(request):
     response = render(request, "500.html", context)
     response.status_code = 500
     return response
+

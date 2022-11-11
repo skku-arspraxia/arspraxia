@@ -51,20 +51,25 @@ ul, li{
 }
 .datatype_wrapper{
     position: relative;
+    width: 100%;
+    height: 50px;
+}
+.datatype_wrapper ul{
     display: flex;
-    justify-content: space-between;
-    width: 400px;
+    height: 100%;
+    padding: 0;
 }
-.datatype_wrapper > div{
+.datatype_wrapper li{
+    width: calc(100% / 3);
+    height: 100%;
     display: inline-block;
-}
-.datatype_wrapper input{
-    vertical-align: middle;
+    text-align: center;
+    line-height: 3.5;
     cursor: pointer;
+    background-color: #D8D8D8;
 }
-.datatype_wrapper label{
-    margin-left: 5px;
-    cursor: pointer;
+.datatype_wrapper li.active{
+    background-color: #A4A4A4;
 }
 
 /* Train. Inference Page */
