@@ -201,13 +201,10 @@
                 data : param,
                 dataType : "json",
                 success : function(data) {
-                    modalShow("추론이 성공적으로 완료되었습니다.");
                     location.href = "/inference/?task={{task}}&fileName="+data["result_file_name"];
                 },
                 error : function(e) {
                     modalShow("추론이 실패했습니다.");
-                },
-                complete : function(e){
                     $(".hyperparam, .mlstart").attr("disabled", false);
                     $(".mlstart").removeClass("button__loader");
                     $(".button__text").html("Start Inference");

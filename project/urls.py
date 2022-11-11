@@ -14,7 +14,6 @@ urlpatterns = [
     path('data/', views.data),
     path('train/', views.train),
     path('trainStartAjax/', views.trainStartAjax),
-    path('trainGetStatusAjax/', views.trainGetStatusAjax),
     path('inference/', views.inference),
     path('inferenceStartAjax/', views.inferenceStartAjax),
     path('models/', views.models),

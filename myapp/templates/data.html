@@ -5,15 +5,17 @@
         <input type="hidden" name="data_type" class="data_type" value="{{data_type}}"/>
         <input type="hidden" name="fileName" class="fileName" value="{{file_name}}"/>
     </form>
-    <div class="row g-3">
+    <div class="row g-3">        
         <section class="datatype_wrapper">
-            <div><input class="datatype_radio" type="radio" value="train" id="data_type_train" name="data_type" {% if data_type == "train"%}checked{% endif %}/><label for="data_type_train">학습 데이터</label></div>
-            <div><input class="datatype_radio" type="radio" value="inf" id="data_type_inf" name="data_type" {% if data_type == "inf"%}checked{% endif %}/><label for="data_type_inf">추론 데이터</label></div>
-            <div><input class="datatype_radio" type="radio" value="result" id="data_type_result" name="data_type" {% if data_type == "result"%}checked{% endif %}/><label for="data_type_result">추론 결과 데이터</label></div>                                             
+            <ul>
+                <li data-type="train" {% if data_type == "train"%}class="active"{% endif %} >학습 데이터</li>
+                <li data-type="inf" {% if data_type == "inf"%}class="active"{% endif %}>추론 데이터</li>
+                <li data-type="result" {% if data_type == "result"%}class="active"{% endif %}>추론 결과 데이터</li>
+            </ul>
         </section>
         <div class="col-md-12">
-            <label class="form-label" for="dataSrc">Data Set</label>            
-            <a class="data_upload" onclick="window.open('/uploadFile/?task={{task}}','','width=400,height=400');">[데이터 업로드]</a>
+            <label class="form-label" for="dataSrc">Data Set</label>
+            <a class="data_upload" onclick="window.open('/uploadFile/?task={{task}}','','width=400,height=400');">[데이터 업로드]</a>          
             {% if data_list %}
                 <select id="dataSrc" class="form-select hyperparam" onchange="dataSelect(this);">
                     <option hidden="" value="0">데이터를 선택해주세요</option>
@@ -36,47 +38,71 @@
             <table class="table table-light table-striped" style="text-align:center;">
                 <thead>
                     <tr>
-                        <th style="width:10%;">번호</th>
+                        <th style="width:5%;">번호</th>
                         {% if data_type == 'train' %}
                             {% if task == 'ner'%}
-                                <th style="width:60%;">문장</th>
+                                <th style="width:65%;">문장</th>
                                 <th style="width:30%;">분류</th>
                             {% elif task == 'sa' %}
-                                <th style="width:75%;">문장</th>
+                                <th style="width:80%;">문장</th>
                                 <th style="width:15%;">분류</th>
                             {% endif %}
                         {% elif data_type == 'inf' %}
-                            <th style="width:90%;">문장</th>
+                            <th style="width:95%;">문장</th>
                         {% elif data_type == 'result' %}
                             {% if task == 'ner'%}
-                                <th style="width:60%;">문장</th>
-                                <th style="width:30%;">분류</th>
+                                <th style="width:55%;">문장</th>
+                                <th style="width:20%;">토큰</th>
+                                <th style="width:20%;">태그</th>
                             {% elif task == 'sa' %}
                                 <th style="width:75%;">문장</th>
-                                <th style="width:15%;">분류</th>
+                                <th style="width:10%;">분류</th>
+                                <th style="width:10%;">스코어</th>
                             {% endif %}
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for data in page_obj %}
-                        <tr>
-                            <td>{{ forloop.counter | add:start_idx }}</td>
-                            <td>{{ data.text }}</td>
+                        {% if task == 'ner'%}
                             {% if data_type == 'train'%}
-                                {% if task == 'ner'%}
-                                    <td style="text-align:left;">{{ data.classification }}</td>
-                                {% elif task == 'sa' %}
-                                    <td>{{ data.classification }}</td>
-                                {% endif %}
+                                <tr>
+                                    <td>{{ forloop.counter | add:start_idx }}</td>
+                                    <td>{{ data.text }}</td>
+                                    <td style="text-align:left;">{{ data.classification }}</td>  
+                                </tr>
+                            {% elif data_type == 'inf'%}
+                                <tr>
+                                    <td>{{ forloop.counter | add:start_idx }}</td>
+                                    <td>{{ data.text }}</td>
+                                </tr>
                             {% elif data_type == 'result'%}
-                                {% if task == 'ner'%}
-                                    <td style="text-align:left;">{{ data.classification }}</td>
-                                {% elif task == 'sa' %}
-                                    <td>{{ data.classification }}</td>
-                                {% endif %}
+                                {% for tag, token in data.tagtoken %}
+                                    {% if forloop.first %}
+                                        <tr>                            
+                                            <td rowspan="{{ data.length }}">{{ data.index | add:start_idx }}</td>
+                                            <td rowspan="{{ data.length }}" style="text-align: left;">{{ data.text }}</td>
+                                            <td>{{ token }}</td>
+                                            <td style="text-align: center;">{{ tag }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>                            
+                                            <td>{{ token }}</td>
+                                            <td style="text-align: center;">{{ tag }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
                             {% endif %}
-                        </tr>
+                        {% elif task == 'sa' %}
+                            <tr>
+                                <td>{{ forloop.counter | add:start_idx }}</td>
+                                <td>{{ data.text }}</td>
+                                <td>{{ data.classification }}</td>
+                                {% if data_type == 'result'%}
+                                    <td>{{ data.score }}</td>
+                                {% endif %}
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -131,8 +157,8 @@
                 }
             });
 
-            $(".datatype_radio").click(function(){
-                var datatype = $(this).val();
+            $(".datatype_wrapper li").click(function(){
+                var datatype = $(this).data("type");
                 location.href = "/data/?task={{task}}&data_type="+datatype;
             });
         });

@@ -115,70 +115,19 @@
                     $("#modeldes").val("");
                     $("#pretrained").val(-1);
                     $("#dataSrc").val(-1);
-
+                    
                     modalShow("모델 학습이 성공적으로 완료되었습니다.");
                 },
                 error : function(e) {
                     modalShow("모델 학습이 실패했습니다.");
                 },
                 complete : function(e){
-                    //clearInterval(statusInterval);
-                    //$(".status").hide();
                     $(".hyperparam, .mlstart").attr("disabled", false);
                     $(".mlstart").removeClass("button__loader");        
                     $(".button__text").html("Start Training");
                     isTrainStart = 0;
                 }
             });
-            /*
-            var last_epoch = 0;
-            var statusInterval = setInterval(getStatusAjax, 1000);     
-            function getStatusAjax(){
-                $.ajax({
-                    url : "/trainGetStatusAjax/",
-                    type : "GET",
-                    data : param,
-                    async : false,
-                    dataType : "json",
-                    success : function(data) {
-                        var current_step = parseInt(data["train_current_step"]);
-                        var current_epoch = parseInt(data["train_current_epoch"]);
-                        var appendHTML = "";
-
-                        if(current_step == 1){
-                            appendHTML = "Downloading pretained model<br/>";
-                        }
-                        if(current_step == 2){
-                            appendHTML += "Downloading pretained model finished<br/>";
-                            appendHTML += "Downloading training data<br/>";
-                        }
-                        if(current_step == 3){
-                            appendHTML += "Downloading training data finished<br/>";
-                            last_epoch = current_epoch;
-                            if(last_epoch != current_epoch){
-                                appendHTML += "Training : Epoch " + current_epoch + " / " + Math.round($("#modelepoch").val()) + "<br/>";
-                            }
-                        }
-                        if(current_step == 4){
-                            appendHTML += "Training finished<br/>";
-                            appendHTML += "Uploading model<br/>";
-                        }
-                        if(current_step == 5){
-                            appendHTML += "Uploading finished<br/>";
-                            appendHTML += "Evaluating<br/>";
-                        }
-
-                        $(".status").html(appendHTML);
-                        $(".status").show();
-                    },
-                    error : function(e) {
-                        clearInterval(statusInterval);
-                        $(".status").hide();
-                        modalShow("Error loading status");
-                        console.log("error :" + e.response);
-                    }
-                });
-            }*/
         }
         $(document).ready(function(){
             $(".hpnum").onkeydown = function(e) {
