@@ -78,7 +78,7 @@ class SKKU_NER:
         self.learning_rate = float(params["modellr"])
 
         # Pretrained Model Download
-        localrootPath = "C:/arspraxiabucket/"
+        localrootPath = self.args.path_local_root
         model_path = ""
         modelidx = params["pretrained_model"]
         if int(modelidx) == 0:
@@ -99,7 +99,7 @@ class SKKU_NER:
             # Local
             model_path = localrootPath+"model/"+modelidx+"/"  
             modelsrcList = []
-            my_bucket = s3r.Bucket('arspraxiabucket')
+            my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
             for my_bucket_object in my_bucket.objects.all():
                 filesrc = my_bucket_object.key.split('.')
                 
@@ -113,7 +113,7 @@ class SKKU_NER:
                         modelsrcList.append(filesrc[0] + "." + filesrc[1])
 
             for modelsrc in modelsrcList:
-                s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)  
+                s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
 
             self.model = AutoModelForTokenClassification.from_pretrained(model_path)
 
@@ -121,14 +121,14 @@ class SKKU_NER:
         self.model.to(self.device)
 
         # Train Data Download
-        tdfilePath = "data/ner/train/"
+        tdfilePath = self.args.path_train_data
         tdRemotefileSrc = tdfilePath+params["train_data"]
         tdLocalfilePath = localrootPath+tdfilePath
         tdLocalfileSrc = tdLocalfilePath+params["train_data"]
         if not os.path.exists(tdLocalfilePath):
            os.makedirs(tdLocalfilePath)
 
-        s3c.download_file('arspraxiabucket', tdRemotefileSrc, tdLocalfileSrc)
+        s3c.download_file(project.settings.AWS_BUCKET_NAME, tdRemotefileSrc, tdLocalfileSrc)
         self.data_path = tdLocalfileSrc
         
         # Load dataset
@@ -227,7 +227,7 @@ class SKKU_NER:
         else:
             last_data = NLP_models.objects.order_by("id").last()
             model_new_idx = last_data.id+1
-        output_dir = "C:/arspraxiabucket/model/"+str(model_new_idx)
+        output_dir = self.args.path_local_root+"model/"+str(model_new_idx)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -236,9 +236,9 @@ class SKKU_NER:
         )
         model_to_save.save_pretrained(output_dir)
 
-        torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+        torch.save(self.args, os.path.join(output_dir, self.args.file_args_bin))
 
-        filelist = ["config.json", "pytorch_model.bin", "training_args.bin"]
+        filelist = [self.args.file_config_json, self.args.file_model_bin, self.args.file_args_bin]
 
         # Get model size
         self.model_size = 0
@@ -252,9 +252,9 @@ class SKKU_NER:
             fileuploadname = "model/"+str(model_new_idx)+"/"+file
             with open(os.path.join(output_dir, file), "rb") as f:
                 s3c.upload_fileobj(
-                        f,
-                        'arspraxiabucket',
-                        fileuploadname
+                    f,
+                    project.settings.AWS_BUCKET_NAME,
+                    fileuploadname
                 )
 
         # Delete temp local file
@@ -339,7 +339,7 @@ class SKKU_NER:
         )
 
         # Inference Model Download
-        localrootPath = "C:/arspraxiabucket/"
+        localrootPath = self.args.path_local_root
         model_path = ""
         modelidx = params["inference_model"]
         if int(modelidx) == 0:
@@ -360,7 +360,7 @@ class SKKU_NER:
             # Local
             model_path = localrootPath+"model/"+modelidx+"/"  
             modelsrcList = []
-            my_bucket = s3r.Bucket('arspraxiabucket')
+            my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
             for my_bucket_object in my_bucket.objects.all():
                 filesrc = my_bucket_object.key.split('.')
                 
@@ -374,28 +374,28 @@ class SKKU_NER:
                         modelsrcList.append(filesrc[0] + "." + filesrc[1])
 
             for modelsrc in modelsrcList:
-                s3c.download_file('arspraxiabucket', modelsrc, localrootPath+modelsrc)  
+                s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
 
             self.model = AutoModelForTokenClassification.from_pretrained(model_path)
       
         self.ner = NerPipeline(model=self.model, tokenizer=self.tokenizer, ignore_labels=[], ignore_special_tokens=True)   
         
         # Inference Data Download  
-        localrootPath = "C:/arspraxiabucket/"      
-        tdfilePath = "data/ner/inf/"
+        localrootPath = self.args.path_local_root      
+        tdfilePath = self.args.path_inf_data
         tdRemotefileSrc = tdfilePath+params["inference_data"]
         tdLocalfilePath = localrootPath+tdfilePath
         tdLocalfileSrc = tdLocalfilePath+params["inference_data"]
         if not os.path.exists(tdLocalfilePath):
            os.makedirs(tdLocalfilePath)
-        s3c.download_file('arspraxiabucket', tdRemotefileSrc, tdLocalfileSrc)
+        s3c.download_file(project.settings.AWS_BUCKET_NAME, tdRemotefileSrc, tdLocalfileSrc)
         self.data_path = tdLocalfileSrc
 
 
     def inference(self):
         # Save inference result      
         inputfile = open(self.data_path, 'r', encoding="utf-8")  
-        inf_result_path = "C:/arspraxiabucket/data/ner/result/"
+        inf_result_path = self.args.path_local_root+self.args.path_result_data
         if not os.path.exists(inf_result_path):
             os.makedirs(inf_result_path)  
         now = str(datetime.now())
