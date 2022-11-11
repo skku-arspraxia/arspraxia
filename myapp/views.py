@@ -70,15 +70,14 @@ def data(request):
     if logincheck(request):
         return redirect("/login/")
 
-    data_list = []
     task = request.GET.get("task")
     data_type = request.GET.get("data_type")
-
     if task == None:
         task = "ner"
     if data_type == None:
         data_type = "train"
 
+    data_list = []
     my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
     for my_bucket_object in my_bucket.objects.all():
         data_src = my_bucket_object.key.split(".")
@@ -156,8 +155,11 @@ def train(request):
     if logincheck(request):
         return redirect("/login/")
 
-    data_list = []
     task = request.GET.get("task")
+    if task == None:
+        task = "ner" 
+
+    data_list = []
     my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
     for my_bucket_object in my_bucket.objects.all():
         data_src = my_bucket_object.key.split(".")
@@ -226,45 +228,46 @@ def trainStartAjax(request):
     train_current_epoch = 0
     tempCheck = False
 
-    task = request.GET.get("task")
-    if task == "sa":
-        skku_sa = SKKU_SA()
-        skku_sa.setTrainAttr(params)
-        skku_sa.train()
-        """
-        schedule.every(1).seconds.do(skku_sa_status, skku_sa.getCurrentStep(), skku_sa.getCurrentEpoch())  
-        while skku_sa.isTrainFinished() == False:
-            schedule.run_pending()
-            time.sleep(1)
-            while tempCheck == False:
-                skku_sa.setTrainAttr(params)
-                skku_sa.train()
-                tempCheck = True     
-        """        
-    elif task == "ner":
-        skku_ner = SKKU_NER()
-        skku_ner.setTrainAttr(params)
-        skku_ner.train()   
+    if project.settings.ISGPUON:
+        task = request.GET.get("task")
+        if task == "sa":
+            skku_sa = SKKU_SA()
+            skku_sa.setTrainAttr(params)
+            skku_sa.train()
+            """
+            schedule.every(1).seconds.do(skku_sa_status, skku_sa.getCurrentStep(), skku_sa.getCurrentEpoch())  
+            while skku_sa.isTrainFinished() == False:
+                schedule.run_pending()
+                time.sleep(1)
+                while tempCheck == False:
+                    skku_sa.setTrainAttr(params)
+                    skku_sa.train()
+                    tempCheck = True     
+            """        
+        elif task == "ner":
+            skku_ner = SKKU_NER()
+            skku_ner.setTrainAttr(params)
+            skku_ner.train()   
 
-    # DB 생성 및 저장
-    trainStartAjax = NLP_models()
-    trainStartAjax.model_task = task
-    trainStartAjax.model_name = request.GET.get("modelname")
-    trainStartAjax.epoch = request.GET.get("modelepoch")
-    trainStartAjax.learning_rate = request.GET.get("modellr")
-    trainStartAjax.batch_size = request.GET.get("modelbs")
-    trainStartAjax.description = request.GET.get("modeldes")
-    if task == "sa":
-        trainStartAjax.precision = skku_sa.getPrecision()
-        trainStartAjax.recall = skku_sa.getRecall()
-        trainStartAjax.f1 = skku_sa.getF1score()
-        trainStartAjax.volume = skku_sa.getModelsize()
-    elif task == "ner":
-        trainStartAjax.precision = skku_ner.getPrecision()
-        trainStartAjax.recall = skku_ner.getRecall()
-        trainStartAjax.f1 = skku_ner.getF1score()
-        trainStartAjax.volume = skku_ner.getModelsize()
-    trainStartAjax.save()
+        # DB 생성 및 저장
+        trainStartAjax = NLP_models()
+        trainStartAjax.model_task = task
+        trainStartAjax.model_name = request.GET.get("modelname")
+        trainStartAjax.epoch = request.GET.get("modelepoch")
+        trainStartAjax.learning_rate = request.GET.get("modellr")
+        trainStartAjax.batch_size = request.GET.get("modelbs")
+        trainStartAjax.description = request.GET.get("modeldes")
+        if task == "sa":
+            trainStartAjax.precision = skku_sa.getPrecision()
+            trainStartAjax.recall = skku_sa.getRecall()
+            trainStartAjax.f1 = skku_sa.getF1score()
+            trainStartAjax.volume = skku_sa.getModelsize()
+        elif task == "ner":
+            trainStartAjax.precision = skku_ner.getPrecision()
+            trainStartAjax.recall = skku_ner.getRecall()
+            trainStartAjax.f1 = skku_ner.getF1score()
+            trainStartAjax.volume = skku_ner.getModelsize()
+        trainStartAjax.save()
 
     context = {
         "result" : "success"
@@ -276,8 +279,11 @@ def inference(request):
     if logincheck(request):
         return redirect("/login/")
 
-    data_list = []
     task = request.GET.get("task")
+    if task == None:
+        task = "ner" 
+
+    data_list = []
     my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
     for my_bucket_object in my_bucket.objects.all():
         data_src = my_bucket_object.key.split(".")
@@ -349,23 +355,27 @@ def inferenceStartAjax(request):
     if logincheck(request):
         return redirect("/login/")
         
-    task = request.GET.get("task")    
+    task = request.GET.get("task") 
+    if task == None:
+        task = "ner" 
+
+    result_file_name = ""  
     params = {
         "inference_data" : request.GET.get("dataSrc"),
         "inference_model" : request.GET.get("inference_model"),
     }
 
-    result_file_name = ""
-    if task == "sa":
-        skku_sa = SKKU_SA()
-        skku_sa.setInferenceAttr(params)
-        skku_sa.inference()
-        result_file_name = skku_sa.getResultFileName()
-    elif task == "ner":
-        skku_ner = SKKU_NER()
-        skku_ner.setInferenceAttr(params)
-        skku_ner.inference()
-        result_file_name = skku_ner.getResultFileName()
+    if project.settings.ISGPUON:
+        if task == "sa":
+            skku_sa = SKKU_SA()
+            skku_sa.setInferenceAttr(params)
+            skku_sa.inference()
+            result_file_name = skku_sa.getResultFileName()
+        elif task == "ner":
+            skku_ner = SKKU_NER()
+            skku_ner.setInferenceAttr(params)
+            skku_ner.inference()
+            result_file_name = skku_ner.getResultFileName()
 
     context = {
             "result" : "success",
@@ -379,6 +389,9 @@ def models(request):
         return redirect("/login/")
 
     task = request.GET.get("task")
+    if task == None:
+        task = "ner" 
+
     board_list = list(NLP_models.objects.filter(model_task=task))
     paginator = Paginator(board_list, "10")
     page = request.GET.get("page", "1")

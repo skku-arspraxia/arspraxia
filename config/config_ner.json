@@ -34,5 +34,8 @@
   "path_local_root" : "C:/arspraxiabucket/",
   "path_train_data" : "data/ner/train/",
   "path_inf_data" : "data/ner/inf/",
-  "path_result_data" : "data/ner/result/"
+  "path_result_data" : "data/ner/result/",
+  "file_config_json" : "config.json",
+  "file_model_bin" : "pytorch_model.bin",
+  "file_args_bin" : "training_args.bin"
 }

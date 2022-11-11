@@ -2,29 +2,34 @@
 {% block mycontent %}  
     <div class="row g-3">
         <div class="container">
+            <span style="font-size:12px;">* 모델 이름을 클릭하면 상세 정보를 확인할 수 있습니다.</span>
             <table class="table table-light table-striped" style="text-align:center;">
                 <thead>
                     <tr>
                         <th style="width:5%;">No</th>
-                        <th style="width:30%;">Name</th>
-                        <th style="width:10%;">Epoch</th>
-                        <th style="width:10%;">Batch Size</th>
-                        <th style="width:10%;">Learning Rate</th>
-                        <th style="width:10%;">F1 Score</th>
-                        <th style="width:10%;">Size</th>
-                        <th style="width:15%;">학습날짜</th>
+                        <th style="width:25%;">Name</th>
+                        <th style="width:7.5%;">Epoch</th>
+                        <th style="width:7.5%;">Batch Size</th>
+                        <th style="width:7.5%;">Learning Rate</th>
+                        <th style="width:7.5%;">Precision</th>
+                        <th style="width:7.5%;">Recall</th>
+                        <th style="width:7.5%;">F1 Score</th>
+                        <th style="width:5%;">Size(MB)</th>
+                        <th style="width:10%;">학습날짜</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for data in page_obj %}
                         <tr>
-                            <td>{{ forloop.counter | add:startIdx }}</td>
-                            <td>{{ data.model_name }}</td>
+                            <td>{{ forloop.counter | add:start_idx }}</td>
+                            <td><a onclick="descShow('{{data.description}}');" style="cursor:pointer;"><b>{{ data.model_name }}</b></a></td>
                             <td>{{ data.epoch }}</td>
                             <td>{{ data.batch_size }}</td>
                             <td>{{ data.learning_rate }}</td>
-                            <td>{{ data.f1 }}%</td>
-                            <td>{{ data.volume }} MB</td>
+                            <td>{{ data.precision }}</td>
+                            <td>{{ data.recall }}</td>
+                            <td>{{ data.f1 }}</td>
+                            <td>{{ data.volume }}</td>
                             <td>{{ data.date | date:"Y년 m월 d일" }}</td>
                         </tr>
                     {% endfor %}
@@ -64,5 +69,13 @@
                 </li>
             {% endif %}
         </ul>
-    </div>    
+    </div>
+    <script>
+        function descShow(msg){
+            if(msg == null || msg == ""){
+                msg = "추가 설명이 없습니다.";
+            }
+            modalShow(msg);
+        }
+    </script>
 {% endblock %}
