@@ -414,7 +414,8 @@ class SKKU_NER:
             anal = self.ner(line)
             for i in anal:
                 ners = ners + i['entity'] + ' '
-                ners = ners[:-1]
+            ners = ners[:-1]
+            line = line[:-1]
             wr.writerow([line, ners])
         inputfile.close()
         outputfile.close()

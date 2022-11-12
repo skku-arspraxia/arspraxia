@@ -59,7 +59,7 @@
     <div class="status" style="display:none;margin-top:50px;"></div>
 
     <script>
-        var isTrainStart = 0;
+        var isTrainStart = true;
         function startTraining(_this){
             if($("#modelname").val() == ""){
                 modalShow("모델 이름을 입력해주세요.");
@@ -101,20 +101,15 @@
             $(_this).addClass("button__loader");
             $(".button__text").html("Training....");
 
-            isTrainStart = 1;
+            isTrainStart = true;
             $.ajax({
                 url : "/trainStartAjax/",
                 type : "GET",
                 data : param,
                 dataType : "json",
                 success : function(data) {     
-                    $("#modelname").val("");
-                    $("#modelepoch").val("");
-                    $("#modellr").val("");
-                    $("#modelbs").val("");
-                    $("#modeldes").val("");
-                    $("#pretrained").val(-1);
-                    $("#dataSrc").val(-1);
+                    $("input.hyperparam, textarea.hyperparam").val("");
+                    $("select.hyperparam").val(-1);
                     
                     modalShow("모델 학습이 성공적으로 완료되었습니다.");
                 },
@@ -125,7 +120,7 @@
                     $(".hyperparam, .mlstart").attr("disabled", false);
                     $(".mlstart").removeClass("button__loader");        
                     $(".button__text").html("Start Training");
-                    isTrainStart = 0;
+                    isTrainStart = false;
                 }
             });
         }
