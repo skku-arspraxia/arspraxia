@@ -567,27 +567,33 @@ class NaverNerProcessor(object):
                 "PER-B", "PER-I", "ISSUE-B", "ISSUE-I", "ORG-B", "ORG-I",
                 "LOC-B", "LOC-I"]
 
-    @classmethod
-    def _read_file(cls, input_file):
-        with open(input_file, "r", encoding="utf-8") as f:
-            lines = []
-            for line in f:
-                lines.append(line.strip())
-            return lines
-
-    def _create_examples(self, dataset):
+    def _create_examples(self, input_file):
         examples = []
-        for (i, data) in enumerate(dataset):
-            words, labels = data.split('\t')
+        fileExtention = input_file.split(".")[1]
+        if fileExtention == "tsv":
+            try:
+                self.dataset = pd.read_csv(input_file, encoding="utf-8", delimiter='\t') 
+            except:   
+                self.dataset = pd.read_csv(input_file, encoding="cp949", delimiter='\t')   
+
+        elif fileExtention == "csv": 
+            try:
+                self.dataset = pd.read_csv(input_file, encoding="utf-8") 
+            except:   
+                self.dataset = pd.read_csv(input_file, encoding="cp949")    
+                    
+        elif fileExtention == "xls" or fileExtention == "xlsx":
+                self.dataset = pd.read_excel(input_file)
+
+        for words, labels in self.dataset.values.tolist():
             words = words.split()
             labels = labels.split()
-            assert len(words) == len(labels)
-
             examples.append(InputExample(words=words, labels=labels))
         return examples
 
+
     def get_examples(self, data_path):
-        return self._create_examples(self._read_file(data_path))
+        return self._create_examples(data_path)
 
 
 def load_and_cache_examples(args, tokenizer, data_path):
