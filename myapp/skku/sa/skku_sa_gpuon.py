@@ -255,7 +255,7 @@ class SKKU_SA:
                 s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
 
         self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
-        self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, function_to_apply=self.args.function_to_apply, return_all_scores=True, Truedevice=0)
+        self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, function_to_apply=self.args.function_to_apply)
 
         # Inference Data Download        
         tdfilePath = self.args.path_inf_data
@@ -277,8 +277,8 @@ class SKKU_SA:
                 result = self.sentiment_classifier(line[0])
                 label_result = result[0]['label']
                 sent_result = ''
-                score = result[0]['score']
-                
+                score = round(result[0]['score'], 3)
+
                 for idx, val in enumerate(dict(self.args.label2id).items()):
                     if label_result == val[0]:
                         sent_result = val[1]
