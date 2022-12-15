@@ -15,9 +15,11 @@ from .models import NLP_models
 
 if project.settings.ISGPUON:
     from myapp.skku.ner.skku_ner_gpuon import SKKU_NER
+    from myapp.skku.ner.skku_ner_crf_gpuon import SKKU_NER_CRF
     from myapp.skku.sa.skku_sa_gpuon import SKKU_SA
 else:
     from myapp.skku.ner.skku_ner_gpuoff import SKKU_NER
+    from myapp.skku.ner.skku_ner_crf_gpuoff import SKKU_NER_CRF
     from myapp.skku.sa.skku_sa_gpuoff import SKKU_SA
 
 s3r = boto3.resource(
@@ -108,14 +110,16 @@ def data(request):
             try:
                 df = pd.read_csv(file_src, encoding="utf-8") 
             except:
-                df = pd.read_csv(file_src, encoding="cp949")                  
+                df = pd.read_csv(file_src, encoding="cp949") 
         elif file_extention == "tsv":
             try:
                 df = pd.read_csv(file_src, encoding="utf-8", delimiter="\t") 
             except:   
-                df = pd.read_csv(file_src, encoding="cp949", delimiter="\t")   
+                df = pd.read_csv(file_src, encoding="cp949", delimiter="\t")  
         elif file_extention == "xls" or file_extention == "xlsx":
                 df = pd.read_excel(file_src)
+        else:
+            raise Exception("Unsupported file extension") 
 
         obj_index = 1
         board_list = []
@@ -125,11 +129,15 @@ def data(request):
             elif data_type == "inf":
                 board_list.append({"text":board[0]})
             elif data_type == "result":
-                if task == "ner":
+                if task == "ner" or task == "ner_crf":
                     board_list.append({"text":board[0], "tagtoken":zip(board[1].split(" "), board[0].split(" ")), "length":len(board[1].split(" ")), "index":obj_index })
                     obj_index += 1
-                else:
+                elif task == "sa":
                     board_list.append({"text":board[0], "classification":board[1], "score":board[2]})
+                else:
+                    raise Exception("Unsupported Task") 
+            else:
+                raise Exception("Unsupported Data Type") 
             
         # board_list -> Paginator
         paginator = Paginator(board_list, "30")
@@ -202,14 +210,21 @@ def trainStartAjax(request):
 
     if project.settings.ISGPUON:
         task = request.GET.get("task")
-        if task == "sa":
+        if task == "ner":
+            skku_ner = SKKU_NER()
+            skku_ner.setTrainAttr(params)
+            skku_ner.train() 
+        elif task == "ner_crf":
+            skku_ner_crf = SKKU_NER_CRF()
+            skku_ner_crf.setTrainAttr(params)
+            skku_ner_crf.train() 
+            pass 
+        elif task == "sa":
             skku_sa = SKKU_SA()
             skku_sa.setTrainAttr(params)
             skku_sa.train()   
-        elif task == "ner":
-            skku_ner = SKKU_NER()
-            skku_ner.setTrainAttr(params)
-            skku_ner.train()   
+        else:
+            raise Exception("Unsupported Task") 
 
         # DB 생성 및 저장
         trainStartAjax = NLP_models()
@@ -219,16 +234,25 @@ def trainStartAjax(request):
         trainStartAjax.learning_rate = request.GET.get("modellr")
         trainStartAjax.batch_size = request.GET.get("modelbs")
         trainStartAjax.description = request.GET.get("modeldes")
-        if task == "sa":
-            trainStartAjax.precision = skku_sa.getPrecision()
-            trainStartAjax.recall = skku_sa.getRecall()
-            trainStartAjax.f1 = skku_sa.getF1score()
-            trainStartAjax.volume = skku_sa.getModelsize()
-        elif task == "ner":
+        if task == "ner":
             trainStartAjax.precision = skku_ner.getPrecision()
             trainStartAjax.recall = skku_ner.getRecall()
             trainStartAjax.f1 = skku_ner.getF1score()
             trainStartAjax.volume = skku_ner.getModelsize()
+        elif task == "ner_crf":
+            trainStartAjax.precision = skku_ner_crf.getPrecision()
+            trainStartAjax.recall = skku_ner_crf.getRecall()
+            trainStartAjax.f1 = skku_ner_crf.getF1score()
+            trainStartAjax.volume = skku_ner_crf.getModelsize()
+            pass
+        elif task == "sa":
+            trainStartAjax.precision = skku_sa.getPrecision()
+            trainStartAjax.recall = skku_sa.getRecall()
+            trainStartAjax.f1 = skku_sa.getF1score()
+            trainStartAjax.volume = skku_sa.getModelsize()
+        else:
+            raise Exception("Unsupported Task") 
+
         trainStartAjax.save()
 
     context = {
@@ -286,11 +310,13 @@ def inference(request):
         obj_index = 1
         board_list = []
         for board in df.values.tolist():        
-            if task == "ner":
+            if task == "ner" or task == "ner_crf":
                 board_list.append({"text":board[0], "tagtoken":zip(board[1].split(" "), board[0].split(" ")), "length":len(board[1].split(" ")), "index":obj_index })
                 obj_index += 1
             elif task == "sa":
                 board_list.append({"text":board[0], "classification":board[1], "score":board[2]})
+            else:
+                raise Exception("Unsupported Task") 
             
         # board_list -> Paginator
         paginator = Paginator(board_list, "10")
@@ -328,16 +354,24 @@ def inferenceStartAjax(request):
     }
 
     if project.settings.ISGPUON:
-        if task == "sa":
-            skku_sa = SKKU_SA()
-            skku_sa.setInferenceAttr(params)
-            skku_sa.inference()
-            result_file_name = skku_sa.getResultFileName()
-        elif task == "ner":
+        if task == "ner":
             skku_ner = SKKU_NER()
             skku_ner.setInferenceAttr(params)
             skku_ner.inference()
             result_file_name = skku_ner.getResultFileName()
+        elif task == "ner_crf":
+            skku_ner_crf = SKKU_NER_CRF()
+            skku_ner_crf.setInferenceAttr(params)
+            skku_ner_crf.inference()
+            result_file_name = skku_ner_crf.getResultFileName() 
+            pass
+        elif task == "sa":
+            skku_sa = SKKU_SA()
+            skku_sa.setInferenceAttr(params)
+            skku_sa.inference()
+            result_file_name = skku_sa.getResultFileName()
+        else:
+            raise Exception("Unsupported Task") 
 
     context = {
             "result" : "success",
@@ -440,7 +474,7 @@ def downloadFile(request):
         response["Content-Disposition"] = "attachment; filename=" + os.path.basename(local_file_src)
         return response
     else:
-        return HttpResponse("<script>modalShow('파일 다운로드에 실패했습니다.');</script>")
+        return HttpResponse("<script>modalShow('Failed to download the file.');</script>")
 
 
 def page404(request, exception):

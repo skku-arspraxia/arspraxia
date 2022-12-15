@@ -40,7 +40,7 @@
                     <tr>
                         <th style="width:5%;">번호</th>
                         {% if data_type == 'train' %}
-                            {% if task == 'ner'%}
+                            {% if task == 'ner' or task == 'ner_crf'%}
                                 <th style="width:65%;">문장</th>
                                 <th style="width:30%;">분류</th>
                             {% elif task == 'sa' %}
@@ -50,7 +50,7 @@
                         {% elif data_type == 'inf' %}
                             <th style="width:95%;">문장</th>
                         {% elif data_type == 'result' %}
-                            {% if task == 'ner'%}
+                            {% if task == 'ner' or task == 'ner_crf'%}
                                 <th style="width:55%;">문장</th>
                                 <th style="width:20%;">토큰</th>
                                 <th style="width:20%;">태그</th>
@@ -64,7 +64,7 @@
                 </thead>
                 <tbody>
                     {% for data in page_obj %}
-                        {% if task == 'ner'%}
+                        {% if task == 'ner' or task == 'ner_crf'%}
                             {% if data_type == 'train'%}
                                 <tr>
                                     <td>{{ forloop.counter | add:start_idx }}</td>
