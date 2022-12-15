@@ -44,7 +44,7 @@
     {% else %}
         <div class="container">
             <a href="/downloadFile?task={{task}}&type=result&fileName={{file_name}}" class="btn btn-primary" style="float:right;margin-bottom: 20px;">데이터 다운로드</a>
-            {% if task == 'ner' %}
+            {% if task == 'ner' or task == 'ner_crf'%}
                 <table class="table table-light table-striped" style="text-align:center;">
                     <thead>
                         <tr>
