@@ -18,6 +18,7 @@ AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
 # ML info
 ISGPUON = False
 NER_JSON_PATH = "./config/config_ner.json"
+NER_CRF_JSON_PATH = "./config/config_ner_crf.json"
 SA_JSON_PATH = "./config/config_sa.json"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

@@ -53,10 +53,13 @@ class SKKU_SA:
         localrootPath = self.args.path_local_root
         model_path = ""
         modelidx = params["pretrained_model"]
-        if int(modelidx) == 0:
+        if int(modelidx) == -1:
             model_path = self.args.pretrained_model
         else:
-            model_path = localrootPath+"model/"+modelidx+"/"  
+            if(int(modelidx) == 0):
+                model_path = localrootPath+"model/sa/"  
+            else:
+                model_path = localrootPath+"model/"+modelidx+"/"  
             modelsrcList = []
             my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
             for my_bucket_object in my_bucket.objects.all():

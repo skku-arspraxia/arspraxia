@@ -21,7 +21,11 @@ from fastprogress.fastprogress import master_bar, progress_bar
 from attrdict import AttrDict
 from sklearn.model_selection import train_test_split
 
-from typing import Optional, Union
+from torch import nn
+
+from transformers.modeling_outputs import TokenClassifierOutput
+
+from typing import Optional, Union, List
 from transformers import (
     BasicTokenizer,
     PreTrainedTokenizer,
@@ -31,7 +35,8 @@ from transformers import (
     is_torch_available,
     AdamW,
     get_linear_schedule_with_warmup,
-    AutoTokenizer, AutoModelForSequenceClassification, AutoModelForTokenClassification
+    AutoTokenizer, AutoModelForSequenceClassification, AutoModelForTokenClassification,
+    ElectraModel, ElectraPreTrainedModel
 )
 
 from transformers.pipelines import ArgumentHandler
@@ -52,8 +57,145 @@ s3r = boto3.resource(
     aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
     aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
 )
+class InputExample(object):
+    """
+    A single training/test example for simple sequence classification.
+    """
+ 
+    def __init__(self, words):
+        self.words = words
+ 
+    def __repr__(self):
+        return str(self.to_json_string())
+ 
+    def to_dict(self):
+        """Serializes this instance to a Python dictionary."""
+        output = copy.deepcopy(self.__dict__)
+        return output
+ 
+    def to_json_string(self):
+        """Serializes this instance to a JSON string."""
+        return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
+ 
+ 
+class InputFeatures(object):
+    """A single set of features of data."""
+ 
+    def __init__(self, input_ids, attention_mask, crf_mask):
+        self.input_ids = input_ids
+        self.attention_mask = attention_mask
+        self.crf_mask = crf_mask
+ 
+    def __repr__(self):
+        return str(self.to_json_string())
+ 
+    def to_dict(self):
+        """Serializes this instance to a Python dictionary."""
+        output = copy.deepcopy(self.__dict__)
+        return output
+ 
+    def to_json_string(self):
+        """Serializes this instance to a JSON string."""
+        return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
+ 
+ 
+class NerProcessor(object):
+    def __init__(self, text):
+        self.text = text
+ 
+    def get_labels(self):
+        return ["O",
+                "PER-B", "PER-I", "ORG-B", "ORG-I",
+                "LOC-B", "LOC-I", "ISSUE-B", "ISSUE-I"]
+ 
+    @classmethod
+    def _strip(cls, input_text):
+        for i in range(len(input_text)):
+            input_text[i] = input_text[i].strip()
+        return input_text
+ 
+    def _create_examples(self, text):
+        examples = []
+        for (i, sentence) in enumerate(text):
+            words = sentence.split()
+            examples.append(InputExample(words=words, labels=[]))
+        return examples
+ 
+    def get_examples(self):
+        return self._create_examples(self._strip(self.text))
 
-class SKKU_NER:    
+
+def convert_examples_to_features(examples, tokenizer, max_seq_length):
+    features = []
+    for (ex_idx, example) in enumerate(examples):
+        tokens = []
+        crf_mask = []
+ 
+        for word in example.words:
+            word_tokens = tokenizer.tokenize(word)
+            if not word_tokens:
+                word_tokens = [tokenizer.unk_token]
+            tokens.extend(word_tokens)
+            crf_mask.extend([True] + [False] * (len(word_tokens) - 1))
+ 
+        special_tokens_count = 2
+        if len(tokens) > max_seq_length - special_tokens_count:
+            tokens = tokens[:(max_seq_length - special_tokens_count)]
+            crf_mask = crf_mask[:(max_seq_length - special_tokens_count)]
+ 
+        # Add [SEP]
+        tokens += [tokenizer.sep_token]
+        crf_mask += [False]
+ 
+        # Add [CLS]
+        tokens = [tokenizer.cls_token] + tokens
+        crf_mask = [False] + crf_mask
+ 
+        input_ids = tokenizer.convert_tokens_to_ids(tokens)
+ 
+        attention_mask = [1] * len(input_ids)
+ 
+        padding_length = max_seq_length - len(input_ids)
+        input_ids += [tokenizer.pad_token_id] * padding_length
+        attention_mask += [0] * padding_length
+        crf_mask += [False] * padding_length
+ 
+        assert len(input_ids) == max_seq_length
+        assert len(attention_mask) == max_seq_length
+        assert len(crf_mask) == max_seq_length
+ 
+        features.append(
+            InputFeatures(input_ids=input_ids,
+                          attention_mask=attention_mask,
+                          crf_mask=crf_mask,
+                          token_type_ids=input_ids,
+                          label_ids="",
+                          label_mask="")
+        )
+ 
+    return features
+ 
+def make_examples(tokenizer, text):
+    MAX_SEQ_LEN = 128
+    processor = NerProcessor(text)
+    examples = processor.get_examples()
+    features = convert_examples_to_features(
+        examples,
+        tokenizer,
+        max_seq_length=MAX_SEQ_LEN
+    )
+ 
+    all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
+    all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
+    all_crf_mask = torch.tensor([f.crf_mask for f in features], dtype=torch.bool)
+ 
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_crf_mask)
+    return dataset
+ 
+
+
+
+class SKKU_NER_CRF:    
     def __init__(self):
         self.trainFinished = False
         self.currentStep = 1
@@ -91,7 +233,7 @@ class SKKU_NER:
                 id2label={str(i): label for i, label in enumerate(labels)},
                 label2id={label: i for i, label in enumerate(labels)},
             )
-            self.model = MODEL_FOR_TOKEN_CLASSIFICATION[self.args.model_type].from_pretrained(
+            self.model = KoelectraCRF.from_pretrained(
                 self.args.model_name_or_path,
                 config=config
             )
@@ -118,7 +260,7 @@ class SKKU_NER:
             for modelsrc in modelsrcList:
                 s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
 
-            self.model = AutoModelForTokenClassification.from_pretrained(model_path)
+            self.model = KoelectraCRF.from_pretrained(model_path)
 
         self.currentStep = 2    # Finished downloading model
         self.model.to(self.device)
@@ -162,6 +304,27 @@ class SKKU_NER:
              'weight_decay': self.args.weight_decay},
             {'params': [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
         ]
+
+        electra_param_optimizer = list(self.model.electra.named_parameters())
+        crf_param_optimizer = list(self.model.crf.named_parameters())
+        linear_param_optimizer = list(self.model.position_wise_ff.named_parameters())
+        optimizer_grouped_parameters = [
+            {'params': [p for n, p in electra_param_optimizer if not any(nd in n for nd in no_decay)],
+            'weight_decay': self.args.weight_decay, 'lr': self.args.learning_rate},
+            {'params': [p for n, p in electra_param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0,
+            'lr': self.args.learning_rate},
+
+            {'params': [p for n, p in crf_param_optimizer if not any(nd in n for nd in no_decay)],
+            'weight_decay': self.args.weight_decay, 'lr': self.args.crf_learning_rate},
+            {'params': [p for n, p in crf_param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0,
+            'lr': self.args.crf_learning_rate},
+
+            {'params': [p for n, p in linear_param_optimizer if not any(nd in n for nd in no_decay)],
+            'weight_decay': self.args.weight_decay, 'lr': self.args.crf_learning_rate},
+            {'params': [p for n, p in linear_param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0,
+            'lr': self.args.crf_learning_rate}
+        ]
+
         optimizer = AdamW(optimizer_grouped_parameters, lr=self.learning_rate, eps=self.args.adam_epsilon)
         scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(t_total * self.args.warmup_proportion), num_training_steps=t_total)
     
@@ -189,19 +352,22 @@ class SKKU_NER:
                 inputs = {
                     "input_ids": batch[0],
                     "attention_mask": batch[1],
-                    "labels": batch[3]
+                    "labels": batch[3],
+                    "label_mask": batch[4],
+                    "crf_mask": batch[5]
                 }
                 if self.args.model_type not in ["distilkobert", "xlm-roberta"]:
                     inputs["token_type_ids"] = batch[2]  # Distilkobert, XLM-Roberta don't use segment_ids
+            
                 outputs = self.model(**inputs)
-
-                loss = outputs[0]
+                loss = outputs['loss']
     
                 if self.args.gradient_accumulation_steps > 1:
                     loss = loss / self.args.gradient_accumulation_steps
     
                 loss.backward()
-                tr_loss += loss.item()
+                tmp_loss = loss.item()
+                tr_loss += tmp_loss
                 if (step + 1) % self.args.gradient_accumulation_steps == 0 or (
                         len(train_dataloader) <= self.args.gradient_accumulation_steps
                         and (step + 1) == len(train_dataloader)
@@ -277,6 +443,7 @@ class SKKU_NER:
         nb_eval_steps = 0
         preds = None
         out_label_ids = None
+        label_mask = None
 
         for batch in progress_bar(eval_dataloader):
             self.model.eval()
@@ -286,27 +453,32 @@ class SKKU_NER:
                 inputs = {
                     "input_ids": batch[0],
                     "attention_mask": batch[1],
-                    "labels": batch[3]
+                    "labels": batch[3],
+                    "label_mask" : batch[4],
+                    "crf_mask" : batch[5]
                 }
                 if self.args.model_type not in ["distilkobert", "xlm-roberta"]:
                     inputs["token_type_ids"] = batch[2]  # Distilkobert, XLM-Roberta don't use segment_ids
                 outputs = self.model(**inputs)
-                tmp_eval_loss, logits = outputs[:2]
-
+                tmp_eval_loss = outputs['loss']
+                tags = outputs['y_pred']
+                
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
             if preds is None:
-                preds = logits.detach().cpu().numpy()
+                preds = tags
                 out_label_ids = inputs["labels"].detach().cpu().numpy()
+                label_mask = inputs["label_mask"].detach().cpu().numpy()
             else:
-                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+                for tag in tags :
+                    preds.append(tag)
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
+                label_mask = np.append(label_mask, inputs["label_mask"].detach().cpu().numpy(), axis=0)
 
         eval_loss = eval_loss / nb_eval_steps
         results = {
             "loss": eval_loss
         }
-        preds = np.argmax(preds, axis=2)
 
         ner_processor = NaverNerProcessor(self.args)
         labels = ner_processor.get_labels()
@@ -318,11 +490,15 @@ class SKKU_NER:
 
         pad_token_label_id = CrossEntropyLoss().ignore_index
 
+        
         for i in range(out_label_ids.shape[0]):
             for j in range(out_label_ids.shape[1]):
-                if out_label_ids[i, j] != pad_token_label_id:
+                if label_mask[i,j] == 1:
                     out_label_list[i].append(label_map[out_label_ids[i][j]])
-                    preds_list[i].append(label_map[preds[i][j]])
+
+        for seq_idx, pred in enumerate(preds) :
+            for j in pred :
+                preds_list[seq_idx].append(label_map[j])
 
         result = compute_metrics(self.args.task, out_label_list, preds_list)
         results.update(result)
@@ -332,7 +508,7 @@ class SKKU_NER:
         self.recall = result["recall"]
     
 
-    def setInferenceAttr(self, params):        
+    def setInferenceAttr(self, params):   
         self.args = loadJSON()
         set_seed(self.args)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -340,7 +516,6 @@ class SKKU_NER:
             self.args.model_name_or_path,
             do_lower_case=self.args.do_lower_case
         )
-
         # Inference Model Download
         localrootPath = self.args.path_local_root
         model_path = ""
@@ -355,7 +530,7 @@ class SKKU_NER:
                 id2label={str(i): label for i, label in enumerate(labels)},
                 label2id={label: i for i, label in enumerate(labels)},
             )
-            self.model = MODEL_FOR_TOKEN_CLASSIFICATION[self.args.model_type].from_pretrained(
+            self.model = KoelectraCRF.from_pretrained(
                 self.args.model_name_or_path,
                 config=config
             )
@@ -366,23 +541,22 @@ class SKKU_NER:
             my_bucket = s3r.Bucket(project.settings.AWS_BUCKET_NAME)
             for my_bucket_object in my_bucket.objects.all():
                 filesrc = my_bucket_object.key.split('.')
-                
+               
                 if not os.path.exists(model_path):
                     os.makedirs(model_path)
-
+ 
                 # 파일 여부 확인
                 if len(filesrc) > 1:
                     filepath = filesrc[0].split("/")
                     if filepath[0] == "model" and filepath[1] == modelidx:
                         modelsrcList.append(filesrc[0] + "." + filesrc[1])
-
+ 
             for modelsrc in modelsrcList:
                 s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
+ 
+            self.model = KoelectraCRF.from_pretrained(model_path)
 
-            self.model = AutoModelForTokenClassification.from_pretrained(model_path)
-      
-        self.ner = NerPipeline(model=self.model, tokenizer=self.tokenizer, ignore_labels=[], ignore_special_tokens=True)   
-        
+        #############################################
         # Inference Data Download  
         localrootPath = self.args.path_local_root      
         tdfilePath = self.args.path_inf_data
@@ -394,10 +568,9 @@ class SKKU_NER:
         s3c.download_file(project.settings.AWS_BUCKET_NAME, tdRemotefileSrc, tdLocalfileSrc)
         self.data_path = tdLocalfileSrc
 
-
     def inference(self):
-        # Save inference result      
-        text = []
+        
+        text=[]
         fileExtention = self.data_path.split(".")[1]
         if fileExtention == "xls" or fileExtention == "xlsx":
             exellines = pd.read_excel(self.data_path, usecols=[0])
@@ -423,6 +596,42 @@ class SKKU_NER:
                     tline = line[0].strip()
                     text.append(tline)
 
+        print(text)
+        self.model.to(self.device)
+        processor=NerProcessor(text)
+        labels=processor.get_labels()
+       
+        str_dataset=make_examples(self.tokenizer, text)
+        str_sampler=SequentialSampler(str_dataset)
+        str_dataloader=DataLoader(str_dataset,sampler=str_sampler,batch_size=len(text))
+        preds=None
+        #label_mask=None ?
+        for batch in str_dataloader:
+            print(len(batch))
+            self.model.eval()
+            batch=tuple(t.to(self.device) for t in batch)
+           
+            with torch.no_grad():
+                inputs={
+                    "input_ids":batch[0],
+                    "attention_mask":batch[1],
+                    "crf_mask":batch[2]
+                }
+                outputs=self.model(**inputs)
+                tags=outputs['y_pred']
+            preds=tags
+            #label_mask=inputs["crf_mask"].detach().cpu().numpy() ?
+
+        label_map={i: label for i, label in enumerate(labels)}
+       
+        preds_list = [[] for _ in range(len(preds))]
+       
+        for seq_idx, pred in enumerate(preds):
+            for j in pred :
+                preds_list[seq_idx].append(label_map[j])
+         
+        #self.ner = NerPipeline(model=self.model, tokenizer=self.tokenizer, ignore_labels=[], ignore_special_tokens=True)  
+       
         inf_result_path = self.args.path_local_root+self.args.path_result_data
         if not os.path.exists(inf_result_path):
             os.makedirs(inf_result_path)  
@@ -433,22 +642,21 @@ class SKKU_NER:
         now = now[:14]
         self.result_file_name = now+".csv"
         outputpath =  inf_result_path+self.result_file_name
-
-        outputfile = open(outputpath, 'w', encoding='utf-8', newline='')
-        wr = csv.writer(outputfile)
-        
-        for line in text:
-            ners = ""
-            anal = self.ner(line)
-            for i in anal:
-                ners = ners + i['entity'] + ' '
-            ners = ners.strip()
-            line = line.strip()
-            print([line, ners])
-            wr.writerow([line, ners])
-        outputfile.close()
-
-        # Save inference result in AWS     
+        with open(outputpath,'w', encoding="utf-8") as write:
+            wr=csv.writer(write)
+            i=0
+            for line in text:
+                predstr = ' '.join(s for s in preds_list[i])
+                wr.writerow([line,predstr])
+                i+=1
+        #if excel
+        # f_csv=pd.read_csv(outputpath)
+        # f_excel=pd.ExcelWriter(now+".xlsx")
+        # f_csv.to_excel(f_excel, index=False)
+        # f_excel.save()
+        # outputpath=f_excel
+        ###            
+       
         fileuploadname = self.args.path_result_data+self.result_file_name
         with open(outputpath, "rb") as f:
             s3c.upload_fileobj(
@@ -506,11 +714,13 @@ class InputExample(object):
 
 
 class InputFeatures(object):
-    def __init__(self, input_ids, attention_mask, token_type_ids, label_ids):
+    def __init__(self, input_ids, attention_mask, token_type_ids, label_ids, label_mask, crf_mask):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
         self.token_type_ids = token_type_ids
         self.label_ids = label_ids
+        self.label_mask = label_mask
+        self.crf_mask = crf_mask
 
     def __repr__(self):
         return str(self.to_json_string())
@@ -529,7 +739,9 @@ def ner_convert_examples_to_features(
         tokenizer,
         max_seq_length,
         task,
-        pad_token_label_id=-100,
+        pad_token_label_id=0,
+        bos_token_label_id=0,
+        eos_token_label_id=0,
 ):
     label_lst = NaverNerProcessor(args)
     label_lst_label = label_lst.get_labels()
@@ -539,6 +751,8 @@ def ner_convert_examples_to_features(
     for (ex_index, example) in enumerate(examples):
         tokens = []
         label_ids = []
+        label_mask = []
+        crf_mask = []
 
         for word, label in zip(example.words, example.labels):
             word_tokens = tokenizer.tokenize(word)
@@ -546,20 +760,32 @@ def ner_convert_examples_to_features(
                 word_tokens = [tokenizer.unk_token]  # For handling the bad-encoded word
             tokens.extend(word_tokens)
             # Use the real label id for the first token of the word, and padding ids for the remaining tokens
-            label_ids.extend([label_map[label]] + [pad_token_label_id] * (len(word_tokens) - 1))
+            if label.endswith("-B"):
+                label_ids.extend([label_map[label]] + [label_map[label] + 1] * (len(word_tokens) - 1))
+            else :
+                label_ids.extend([label_map[label]] + [label_map[label]] * (len(word_tokens) - 1))
 
+            label_mask.extend([1] + [0] * (len(word_tokens) - 1))
+            crf_mask.extend([True] + [False] * (len(word_tokens) - 1))
+        
         special_tokens_count = 2
         if len(tokens) > max_seq_length - special_tokens_count:
             tokens = tokens[:(max_seq_length - special_tokens_count)]
             label_ids = label_ids[:(max_seq_length - special_tokens_count)]
+            label_mask = label_mask[:(max_seq_length - special_tokens_count)]
+            crf_mask = crf_mask[:(max_seq_length - special_tokens_count)]
 
         # Add [SEP]
         tokens += [tokenizer.sep_token]
         label_ids += [pad_token_label_id]
+        label_mask += [0]
+        crf_mask += [False]
 
         # Add [CLS]
         tokens = [tokenizer.cls_token] + tokens
-        label_ids = [pad_token_label_id] + label_ids
+        label_ids = [bos_token_label_id] + label_ids
+        label_mask = [0] + label_mask
+        crf_mask = [False] + crf_mask
 
         token_type_ids = [0] * len(tokens)
 
@@ -572,17 +798,23 @@ def ner_convert_examples_to_features(
         attention_mask += [0] * padding_length
         token_type_ids += [0] * padding_length
         label_ids += [pad_token_label_id] * padding_length
+        label_mask += [pad_token_label_id] * padding_length
+        crf_mask += [False] * padding_length
 
         assert len(input_ids) == max_seq_length
         assert len(attention_mask) == max_seq_length
         assert len(token_type_ids) == max_seq_length
         assert len(label_ids) == max_seq_length
+        assert len(label_mask) == max_seq_length
+        assert len(crf_mask) == max_seq_length
 
         features.append(
             InputFeatures(input_ids=input_ids,
                           attention_mask=attention_mask,
                           token_type_ids=token_type_ids,
-                          label_ids=label_ids)
+                          label_ids=label_ids,
+                          label_mask=label_mask,
+                          crf_mask=crf_mask)
         )
     return features
 
@@ -628,14 +860,12 @@ def load_and_cache_examples(args, tokenizer, data_path):
     processor = NaverNerProcessor(args)
     examples = processor.get_examples(data_path)
     
-    pad_token_label_id = CrossEntropyLoss().ignore_index
     features = ner_convert_examples_to_features(
         args,
         examples,
         tokenizer,
         max_seq_length=args.max_seq_len,
-        task=args.task,
-        pad_token_label_id=pad_token_label_id
+        task=args.task
     )
 
     # Convert to Tensors and build dataset
@@ -643,8 +873,10 @@ def load_and_cache_examples(args, tokenizer, data_path):
     all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
     all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
     all_label_ids = torch.tensor([f.label_ids for f in features], dtype=torch.long)
+    all_label_mask = torch.tensor([f.label_mask for f in features], dtype=torch.long)
+    all_crf_mask = torch.tensor([f.crf_mask for f in features], dtype=torch.bool)
 
-    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_label_ids)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_label_ids, all_label_mask, all_crf_mask)
 
     return dataset
 
@@ -815,8 +1047,244 @@ class NerPipeline(Pipeline):
     def _forward(self, **pipeline_parameters):
         pass
 
+class KoelectraCRF(ElectraPreTrainedModel):
+    def __init__(self, config):
+        super(KoelectraCRF, self).__init__(config)
+
+        self.electra = ElectraModel(config)
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.position_wise_ff = nn.Linear(config.hidden_size, config.num_labels)
+        self.crf = CRF(num_tags=config.num_labels, batch_first=True)
+        self.init_weights()
+
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None, label_mask=None, crf_mask=None):
+        outputs =self.electra(input_ids = input_ids,attention_mask=attention_mask,token_type_ids=token_type_ids)
+        sequence_output = outputs[0]
+        sequence_output = self.dropout(sequence_output)
+        logits = self.position_wise_ff(sequence_output)
+        # outputs = (logits,)
+        outputs = {}
+        outputs['logits'] = logits
+
+        mask = crf_mask
+        batch_size = logits.shape[0]
+
+        if labels is not None:
+            loss = 0
+            for seq_logits, seq_labels, seq_mask in zip(logits, labels, mask):
+                seq_logits = seq_logits[seq_mask].unsqueeze(0)
+                seq_labels = seq_labels[seq_mask].unsqueeze(0)
+                loss -= self.crf(emissions = seq_logits, tags=seq_labels, reduction='token_mean')
+            loss /= batch_size
+            outputs['loss'] = loss
+
+        # else :
+        #     output_tags = []
+        #     for seq_logits, seq_mask in zip(logits, mask):
+        #         seq_logits = seq_logits[seq_mask].unsqueeze(0)
+        #         tags = self.crf.decode(seq_logits)
+        #         output_tags.append(tags[0])
+        #     outputs['y_pred'] = output_tags
+        output_tags = []
+        for seq_logits, seq_mask in zip(logits, mask):
+            seq_logits = seq_logits[seq_mask].unsqueeze(0)
+            tags = self.crf.decode(seq_logits)
+            output_tags.append(tags[0])
+        outputs['y_pred'] = output_tags
+
+        return outputs
+
+
+
+class CRF(nn.Module):
+    def __init__(self, num_tags: int, batch_first: bool = False) -> None:
+        if num_tags <= 0:
+            raise ValueError(f'invalid number of tags: {num_tags}')
+        super().__init__()
+        self.num_tags = num_tags
+        self.batch_first = batch_first
+        self.start_transitions = nn.Parameter(torch.empty(num_tags))
+        self.end_transitions = nn.Parameter(torch.empty(num_tags))
+        self.transitions = nn.Parameter(torch.empty(num_tags, num_tags))
+
+        self.reset_parameters()
+
+    def reset_parameters(self) -> None:
+        nn.init.uniform_(self.start_transitions, -0.1, 0.1)
+        nn.init.uniform_(self.end_transitions, -0.1, 0.1)
+        nn.init.uniform_(self.transitions, -0.1, 0.1)
+
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}(num_tags={self.num_tags})'
+
+    def forward(
+            self,
+            emissions: torch.Tensor,
+            tags: torch.LongTensor,
+            mask: Optional[torch.ByteTensor] = None,
+            reduction: str = 'sum',
+    ) -> torch.Tensor:
+        self._validate(emissions, tags=tags, mask=mask)
+        if reduction not in ('none', 'sum', 'mean', 'token_mean'):
+            raise ValueError(f'invalid reduction: {reduction}')
+        if mask is None:
+            mask = torch.ones_like(tags, dtype=torch.uint8)
+
+        if self.batch_first:
+            emissions = emissions.transpose(0, 1)
+            tags = tags.transpose(0, 1)
+            mask = mask.transpose(0, 1)
+
+        numerator = self._compute_score(emissions, tags, mask)
+        denominator = self._compute_normalizer(emissions, mask)
+        llh = numerator - denominator
+
+        if reduction == 'none':
+            return llh
+        if reduction == 'sum':
+            return llh.sum()
+        if reduction == 'mean':
+            return llh.mean()
+        assert reduction == 'token_mean'
+        return llh.sum() / mask.float().sum()
+
+
+    def decode(self, emissions: torch.Tensor,
+               mask: Optional[torch.ByteTensor] = None) -> List[List[int]]:
+        self._validate(emissions, mask=mask)
+        if mask is None:
+            mask = emissions.new_ones(emissions.shape[:2], dtype=torch.uint8)
+
+        if self.batch_first:
+            emissions = emissions.transpose(0, 1)
+            mask = mask.transpose(0, 1)
+
+        return self._viterbi_decode(emissions, mask)
+
+
+    def _validate(
+            self,
+            emissions: torch.Tensor,
+            tags: Optional[torch.LongTensor] = None,
+            mask: Optional[torch.ByteTensor] = None) -> None:
+        if emissions.dim() != 3:
+            raise ValueError(f'emissions must have dimension of 3, got {emissions.dim()}')
+        if emissions.size(2) != self.num_tags:
+            raise ValueError(
+                f'expected last dimension of emissions is {self.num_tags}, '
+                f'got {emissions.size(2)}')
+
+        if tags is not None:
+            if emissions.shape[:2] != tags.shape:
+                raise ValueError(
+                    'the first two dimensions of emissions and tags must match, '
+                    f'got {tuple(emissions.shape[:2])} and {tuple(tags.shape)}')
+
+        if mask is not None:
+            if emissions.shape[:2] != mask.shape:
+                raise ValueError(
+                    'the first two dimensions of emissions and mask must match, '
+                    f'got {tuple(emissions.shape[:2])} and {tuple(mask.shape)}')
+            no_empty_seq = not self.batch_first and mask[0].all()
+            no_empty_seq_bf = self.batch_first and mask[:, 0].all()
+            if not no_empty_seq and not no_empty_seq_bf:
+                raise ValueError('mask of the first timestep must all be on')
+
+    def _compute_score(
+            self, emissions: torch.Tensor, tags: torch.LongTensor,
+            mask: torch.ByteTensor) -> torch.Tensor:
+        assert emissions.dim() == 3 and tags.dim() == 2
+        assert emissions.shape[:2] == tags.shape
+        assert emissions.size(2) == self.num_tags
+        assert mask.shape == tags.shape
+        assert mask[0].all()
+
+        seq_length, batch_size = tags.shape
+        mask = mask.float()
+
+        score = self.start_transitions[tags[0]]
+        score += emissions[0, torch.arange(batch_size), tags[0]]
+
+        for i in range(1, seq_length):
+            score += self.transitions[tags[i - 1], tags[i]] * mask[i]
+
+            score += emissions[i, torch.arange(batch_size), tags[i]] * mask[i]
+
+        seq_ends = mask.long().sum(dim=0) - 1
+        last_tags = tags[seq_ends, torch.arange(batch_size)]
+        score += self.end_transitions[last_tags]
+
+        return score
+
+    def _compute_normalizer(
+            self, emissions: torch.Tensor, mask: torch.ByteTensor) -> torch.Tensor:
+        assert emissions.dim() == 3 and mask.dim() == 2
+        assert emissions.shape[:2] == mask.shape
+        assert emissions.size(2) == self.num_tags
+        assert mask[0].all()
+
+        seq_length = emissions.size(0)
+        score = self.start_transitions + emissions[0]
+
+        for i in range(1, seq_length):
+            broadcast_score = score.unsqueeze(2)
+
+            broadcast_emissions = emissions[i].unsqueeze(1)
+
+            next_score = broadcast_score + self.transitions + broadcast_emissions
+
+            next_score = torch.logsumexp(next_score, dim=1)
+
+            score = torch.where(mask[i].unsqueeze(1), next_score, score)
+
+        score += self.end_transitions
+
+        return torch.logsumexp(score, dim=1)
+
+    def _viterbi_decode(self, emissions: torch.FloatTensor,
+                        mask: torch.ByteTensor) -> List[List[int]]:
+        assert emissions.dim() == 3 and mask.dim() == 2
+        assert emissions.shape[:2] == mask.shape
+        assert emissions.size(2) == self.num_tags
+        assert mask[0].all()
+
+        seq_length, batch_size = mask.shape
+
+        score = self.start_transitions + emissions[0]
+        history = []
+
+        for i in range(1, seq_length):
+            broadcast_score = score.unsqueeze(2)
+
+            broadcast_emission = emissions[i].unsqueeze(1)
+
+            next_score = broadcast_score + self.transitions + broadcast_emission
+
+            next_score, indices = next_score.max(dim=1)
+
+            score = torch.where(mask[i].unsqueeze(1), next_score, score)
+            history.append(indices)
+
+        score += self.end_transitions
+
+        seq_ends = mask.long().sum(dim=0) - 1
+        best_tags_list = []
+
+        for idx in range(batch_size):
+
+            _, best_last_tag = score[idx].max(dim=0)
+            best_tags = [best_last_tag.item()]
+            for hist in reversed(history[:seq_ends[idx]]):
+                best_last_tag = hist[idx][best_tags[-1]]
+                best_tags.append(best_last_tag.item())
+
+            best_tags.reverse()
+            best_tags_list.append(best_tags)
+
+        return best_tags_list
 
 def loadJSON():
-    with open("./config/config_ner.json", encoding="UTF-8") as f:
+    with open("./config/config_ner_crf.json", encoding="UTF-8") as f:
         args = AttrDict(json.load(f))	
     return args
