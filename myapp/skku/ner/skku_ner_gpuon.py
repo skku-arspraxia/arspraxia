@@ -112,8 +112,13 @@ class SKKU_NER:
                 # 파일 여부 확인
                 if len(filesrc) > 1:
                     filepath = filesrc[0].split("/")
-                    if filepath[0] == "model" and filepath[1] == modelidx:
-                        modelsrcList.append(filesrc[0] + "." + filesrc[1])
+                    if filepath[0] == "model":
+                        if int(modelidx) == 0:
+                            if filepath[1] == "ner":
+                                modelsrcList.append(filesrc[0] + "." + filesrc[1])
+                        else:
+                            if filepath[1] == modelidx:
+                                modelsrcList.append(filesrc[0] + "." + filesrc[1])
 
             for modelsrc in modelsrcList:
                 s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
@@ -444,7 +449,6 @@ class SKKU_NER:
                 ners = ners + i['entity'] + ' '
             ners = ners.strip()
             line = line.strip()
-            print([line, ners])
             wr.writerow([line, ners])
         outputfile.close()
 

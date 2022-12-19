@@ -71,8 +71,14 @@ class SKKU_SA:
                 # 파일 여부 확인
                 if len(filesrc) > 1:
                     filepath = filesrc[0].split("/")
-                    if filepath[0] == "model" and filepath[1] == modelidx:
-                        modelsrcList.append(filesrc[0] + "." + filesrc[1])
+                    if filepath[0] == "model":
+                        if int(modelidx) == 0:
+                            if filepath[1] == "sa":
+                                modelsrcList.append(filesrc[0] + "." + filesrc[1])
+                        else:
+                            if filepath[1] == modelidx:
+                                modelsrcList.append(filesrc[0] + "." + filesrc[1])
+
 
             for modelsrc in modelsrcList:
                 s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
@@ -273,20 +279,34 @@ class SKKU_SA:
 
 
     def inference(self):
-        self.inf_result = []
-        with open(self.data_path, 'r', encoding="utf-8") as f:
-            rdr = csv.reader(f)
-            for line in rdr:
-                result = self.sentiment_classifier(line[0])
-                label_result = result[0]['label']
-                sent_result = ''
-                score = round(result[0]['score'], 3)
+        self.inf_result = []        
+        fileExtention = self.data_path.split(".")[1]
+        if fileExtention == "tsv":
+            try:
+                self.dataset = pd.read_csv(self.data_path, encoding="utf-8", delimiter='\t') 
+            except:   
+                self.dataset = pd.read_csv(self.data_path, encoding="cp949", delimiter='\t')   
 
-                for idx, val in enumerate(dict(self.args.label2id).items()):
-                    if label_result == val[0]:
-                        sent_result = val[1]
+        elif fileExtention == "csv": 
+            try:
+                self.dataset = pd.read_csv(self.data_path, encoding="utf-8") 
+            except:   
+                self.dataset = pd.read_csv(self.data_path, encoding="cp949")    
+                    
+        elif fileExtention == "xls" or fileExtention == "xlsx":
+                self.dataset = pd.read_excel(self.data_path)
 
-                self.inf_result.append([line[0], sent_result, score])
+        for line in self.dataset.values.tolist():
+            result = self.sentiment_classifier(line[0])
+            label_result = result[0]['label']
+            sent_result = ''
+            score = round(result[0]['score'], 3)
+
+            for idx, val in enumerate(dict(self.args.label2id).items()):
+                if label_result == val[0]:
+                    sent_result = val[1]
+
+            self.inf_result.append([line[0], sent_result, score])
 
         # Save inference result        
         inf_result_path = self.args.path_local_root+self.args.path_result_data

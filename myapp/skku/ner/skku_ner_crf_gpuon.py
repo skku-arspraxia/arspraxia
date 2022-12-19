@@ -254,8 +254,13 @@ class SKKU_NER_CRF:
                 # 파일 여부 확인
                 if len(filesrc) > 1:
                     filepath = filesrc[0].split("/")
-                    if filepath[0] == "model" and filepath[1] == modelidx:
-                        modelsrcList.append(filesrc[0] + "." + filesrc[1])
+                    if filepath[0] == "model":
+                        if int(modelidx) == 0:
+                            if filepath[1] == "ner":
+                                modelsrcList.append(filesrc[0] + "." + filesrc[1])
+                        else:
+                            if filepath[1] == modelidx:
+                                modelsrcList.append(filesrc[0] + "." + filesrc[1])
 
             for modelsrc in modelsrcList:
                 s3c.download_file(project.settings.AWS_BUCKET_NAME, modelsrc, localrootPath+modelsrc)  
@@ -583,20 +588,17 @@ class SKKU_NER_CRF:
                     text.append(tline)
         elif fileExtention == "tsv":
             with open(self.data_path,'r', encoding="utf-8") as read:
-                #lines=read.readlines()
                 lines=csv.reader(read, delimiter="\t")
                 for line in lines:
                     tline = line[0].strip()
                     text.append(tline)
         else:
             with open(self.data_path,'r', encoding="utf-8") as read:
-                #lines=read.readlines()
                 lines=csv.reader(read)
                 for line in lines:
                     tline = line[0].strip()
                     text.append(tline)
 
-        print(text)
         self.model.to(self.device)
         processor=NerProcessor(text)
         labels=processor.get_labels()
@@ -607,7 +609,6 @@ class SKKU_NER_CRF:
         preds=None
         #label_mask=None ?
         for batch in str_dataloader:
-            print(len(batch))
             self.model.eval()
             batch=tuple(t.to(self.device) for t in batch)
            
