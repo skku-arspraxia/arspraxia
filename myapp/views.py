@@ -12,15 +12,9 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db import connection
 from .models import NLP_models
-
-if project.settings.ISGPUON:
-    from myapp.skku.ner.skku_ner_gpuon import SKKU_NER
-    from myapp.skku.ner.skku_ner_crf_gpuon import SKKU_NER_CRF
-    from myapp.skku.sa.skku_sa_gpuon import SKKU_SA
-else:
-    from myapp.skku.ner.skku_ner_gpuoff import SKKU_NER
-    from myapp.skku.ner.skku_ner_crf_gpuoff import SKKU_NER_CRF
-    from myapp.skku.sa.skku_sa_gpuoff import SKKU_SA
+from myapp.skku.ner.skku_ner import SKKU_NER
+from myapp.skku.ner.skku_ner_crf import SKKU_NER_CRF
+from myapp.skku.sa.skku_sa  import SKKU_SA
 
 s3r = boto3.resource(
     "s3",

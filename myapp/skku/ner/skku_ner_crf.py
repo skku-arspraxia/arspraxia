@@ -57,10 +57,9 @@ s3r = boto3.resource(
     aws_access_key_id=project.settings.AWS_ACCESS_KEY_ID,
     aws_secret_access_key=project.settings.AWS_SECRET_ACCESS_ID
 )
-class InputExample(object):
-    """
-    A single training/test example for simple sequence classification.
-    """
+
+class InputExampleforinf(object):
+    # Get input Examples for inference dataset
  
     def __init__(self, words):
         self.words = words
@@ -78,8 +77,8 @@ class InputExample(object):
         return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
  
  
-class InputFeatures(object):
-    """A single set of features of data."""
+class InputFeaturesforinf(object):
+    # Get input features for train dataset for inference
  
     def __init__(self, input_ids, attention_mask, crf_mask):
         self.input_ids = input_ids
@@ -99,7 +98,8 @@ class InputFeatures(object):
         return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
  
  
-class NerProcessor(object):
+class SkkuNerProcessorforinf(object):
+    # processsor for inference
     def __init__(self, text):
         self.text = text
  
@@ -118,7 +118,7 @@ class NerProcessor(object):
         examples = []
         for (i, sentence) in enumerate(text):
             words = sentence.split()
-            examples.append(InputExample(words=words, labels=[]))
+            examples.append(InputExampleforinf(words=words))
         return examples
  
     def get_examples(self):
@@ -126,6 +126,7 @@ class NerProcessor(object):
 
 
 def convert_examples_to_features(examples, tokenizer, max_seq_length):
+    # convert examples to features for train and evaluate
     features = []
     for (ex_idx, example) in enumerate(examples):
         tokens = []
@@ -165,19 +166,17 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length):
         assert len(crf_mask) == max_seq_length
  
         features.append(
-            InputFeatures(input_ids=input_ids,
+            InputFeaturesforinf(input_ids=input_ids,
                           attention_mask=attention_mask,
-                          crf_mask=crf_mask,
-                          token_type_ids=input_ids,
-                          label_ids="",
-                          label_mask="")
+                          crf_mask=crf_mask)
         )
  
     return features
  
-def make_examples(tokenizer, text):
-    MAX_SEQ_LEN = 128
-    processor = NerProcessor(text)
+def make_examples(tokenizer, text, max_seq_len):
+    # Make examples for inference
+    MAX_SEQ_LEN = max_seq_len
+    processor = SkkuNerProcessorforinf(text)
     examples = processor.get_examples()
     features = convert_examples_to_features(
         examples,
@@ -191,11 +190,9 @@ def make_examples(tokenizer, text):
  
     dataset = TensorDataset(all_input_ids, all_attention_mask, all_crf_mask)
     return dataset
- 
-
-
 
 class SKKU_NER_CRF:    
+    # Main class for NER_CRF
     def __init__(self):
         self.trainFinished = False
         self.currentStep = 1
@@ -206,6 +203,7 @@ class SKKU_NER_CRF:
 
 
     def setTrainAttr(self, params):
+        # Set attribute values before Training
         self.args = loadJSON()
         set_seed(self.args)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -225,7 +223,7 @@ class SKKU_NER_CRF:
         modelidx = params["pretrained_model"]
         if int(modelidx) == -1:
             # Hugging Face
-            processor = NaverNerProcessor(self.args)
+            processor = SkkuNerProcessor(self.args)
             labels = processor.get_labels()
             config = CONFIG_CLASSES[self.args.model_type].from_pretrained(
                 self.args.model_name_or_path,
@@ -251,7 +249,7 @@ class SKKU_NER_CRF:
                 if not os.path.exists(model_path):
                     os.makedirs(model_path)
 
-                # 파일 여부 확인
+                # Check is file exist
                 if len(filesrc) > 1:
                     filepath = filesrc[0].split("/")
                     if filepath[0] == "model":
@@ -291,6 +289,7 @@ class SKKU_NER_CRF:
 
 
     def train(self):
+        # Train with 80% of the data
         self.check_is_not_exist = True
 
         train_sampler = RandomSampler(self.train_dataset)
@@ -439,6 +438,7 @@ class SKKU_NER_CRF:
 
     
     def evaluate(self):
+        # After training, measure the performance of the model with 20% of the data.
         results = {}
         eval_sampler = SequentialSampler(self.test_dataset)
         eval_dataloader = DataLoader(self.test_dataset, sampler=eval_sampler, batch_size=self.args.eval_batch_size)
@@ -485,16 +485,16 @@ class SKKU_NER_CRF:
             "loss": eval_loss
         }
 
-        ner_processor = NaverNerProcessor(self.args)
+        ner_processor = SkkuNerProcessor(self.args)
         labels = ner_processor.get_labels()
 
         label_map = {i: label for i, label in enumerate(labels)}
 
+        # out_label_list: labels of train data , preds_list: labels of pred of model
         out_label_list = [[] for _ in range(out_label_ids.shape[0])]
         preds_list = [[] for _ in range(out_label_ids.shape[0])]
 
         pad_token_label_id = CrossEntropyLoss().ignore_index
-
         
         for i in range(out_label_ids.shape[0]):
             for j in range(out_label_ids.shape[1]):
@@ -514,6 +514,7 @@ class SKKU_NER_CRF:
     
 
     def setInferenceAttr(self, params):   
+        # Set attribute values before Inferencing
         self.args = loadJSON()
         set_seed(self.args)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -527,7 +528,7 @@ class SKKU_NER_CRF:
         modelidx = params["inference_model"]
         if int(modelidx) == 0:
             # Hugging Face
-            processor = NaverNerProcessor(self.args)
+            processor = SkkuNerProcessor(self.args)
             labels = processor.get_labels()
             config = CONFIG_CLASSES[self.args.model_type].from_pretrained(
                 self.args.model_name_or_path,
@@ -550,7 +551,7 @@ class SKKU_NER_CRF:
                 if not os.path.exists(model_path):
                     os.makedirs(model_path)
  
-                # 파일 여부 확인
+                # Check is file exist
                 if len(filesrc) > 1:
                     filepath = filesrc[0].split("/")
                     if filepath[0] == "model" and filepath[1] == modelidx:
@@ -561,7 +562,6 @@ class SKKU_NER_CRF:
  
             self.model = KoelectraCRF.from_pretrained(model_path)
 
-        #############################################
         # Inference Data Download  
         localrootPath = self.args.path_local_root      
         tdfilePath = self.args.path_inf_data
@@ -574,7 +574,7 @@ class SKKU_NER_CRF:
         self.data_path = tdLocalfileSrc
 
     def inference(self):
-        
+        # Save the data in a file in a list format
         text=[]
         fileExtention = self.data_path.split(".")[1]
         if fileExtention == "xls" or fileExtention == "xlsx":
@@ -598,16 +598,16 @@ class SKKU_NER_CRF:
                 for line in lines:
                     tline = line[0].strip()
                     text.append(tline)
-
+        
+        # Save the inference result in pred_list
         self.model.to(self.device)
-        processor=NerProcessor(text)
+        processor=SkkuNerProcessorforinf(text)
         labels=processor.get_labels()
-       
-        str_dataset=make_examples(self.tokenizer, text)
+        
+        str_dataset=make_examples(self.tokenizer, text, self.args.max_seq_len)
         str_sampler=SequentialSampler(str_dataset)
         str_dataloader=DataLoader(str_dataset,sampler=str_sampler,batch_size=len(text))
         preds=None
-        #label_mask=None ?
         for batch in str_dataloader:
             self.model.eval()
             batch=tuple(t.to(self.device) for t in batch)
@@ -621,7 +621,6 @@ class SKKU_NER_CRF:
                 outputs=self.model(**inputs)
                 tags=outputs['y_pred']
             preds=tags
-            #label_mask=inputs["crf_mask"].detach().cpu().numpy() ?
 
         label_map={i: label for i, label in enumerate(labels)}
        
@@ -631,8 +630,8 @@ class SKKU_NER_CRF:
             for j in pred :
                 preds_list[seq_idx].append(label_map[j])
          
-        #self.ner = NerPipeline(model=self.model, tokenizer=self.tokenizer, ignore_labels=[], ignore_special_tokens=True)  
-       
+        
+        # Save the inference result as a csv file
         inf_result_path = self.args.path_local_root+self.args.path_result_data
         if not os.path.exists(inf_result_path):
             os.makedirs(inf_result_path)  
@@ -650,13 +649,6 @@ class SKKU_NER_CRF:
                 predstr = ' '.join(s for s in preds_list[i])
                 wr.writerow([line,predstr])
                 i+=1
-        #if excel
-        # f_csv=pd.read_csv(outputpath)
-        # f_excel=pd.ExcelWriter(now+".xlsx")
-        # f_csv.to_excel(f_excel, index=False)
-        # f_excel.save()
-        # outputpath=f_excel
-        ###            
        
         fileuploadname = self.args.path_result_data+self.result_file_name
         with open(outputpath, "rb") as f:
@@ -699,6 +691,7 @@ class SKKU_NER_CRF:
 
 
 class InputExample(object):
+    # Get input Examples for train dataset
     def __init__(self, words, labels):
         self.words = words
         self.labels = labels
@@ -715,6 +708,7 @@ class InputExample(object):
 
 
 class InputFeatures(object):
+    # Get input features for train dataset for train and evaluate
     def __init__(self, input_ids, attention_mask, token_type_ids, label_ids, label_mask, crf_mask):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
@@ -744,7 +738,8 @@ def ner_convert_examples_to_features(
         bos_token_label_id=0,
         eos_token_label_id=0,
 ):
-    label_lst = NaverNerProcessor(args)
+    # convert examples to features for train and evaluate
+    label_lst = SkkuNerProcessor(args)
     label_lst_label = label_lst.get_labels()
     label_map = {label: i for i, label in enumerate(label_lst_label)}
 
@@ -819,7 +814,8 @@ def ner_convert_examples_to_features(
         )
     return features
 
-class NaverNerProcessor(object):
+class SkkuNerProcessor(object):
+    # Ner processor for train and evaluate
     def __init__(self, args):
         self.args = args
 
@@ -829,6 +825,7 @@ class NaverNerProcessor(object):
                 "LOC-B", "LOC-I"]
 
     def _create_examples(self, input_file):
+        # Load dataset amd examples for tsv, csv, xls, xlsx
         examples = []
         fileExtention = input_file.split(".")[1]
         if fileExtention == "tsv":
@@ -858,7 +855,8 @@ class NaverNerProcessor(object):
 
 
 def load_and_cache_examples(args, tokenizer, data_path):
-    processor = NaverNerProcessor(args)
+    # make data to tensor dataset
+    processor = SkkuNerProcessor(args)
     examples = processor.get_examples(data_path)
     
     features = ner_convert_examples_to_features(
@@ -881,174 +879,8 @@ def load_and_cache_examples(args, tokenizer, data_path):
 
     return dataset
 
-
-def custom_encode_plus(sentence,
-                       tokenizer,
-                       return_tensors=None):
-    # {'input_ids': [2, 10841, 10966, 10832, 10541, 21509, 27660, 18, 3], 'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0]}
-    words = sentence.split()
-
-    tokens = []
-    tokens_mask = []
-
-    for word in words:
-        word_tokens = tokenizer.tokenize(word)
-        if not word_tokens:
-            word_tokens = [tokenizer.unk_token]  # For handling the bad-encoded word
-        tokens.extend(word_tokens)
-        tokens_mask.extend([1] + [0] * (len(word_tokens) - 1))
-
-    ids = tokenizer.convert_tokens_to_ids(tokens)
-    len_ids = len(ids)
-    total_len = len_ids + tokenizer.num_special_tokens_to_add()
-    """ if tokenizer.max_len and total_len > tokenizer.max_len:
-        ids, _, _ = tokenizer.truncate_sequences(
-            ids,
-            pair_ids=None,
-            num_tokens_to_remove=total_len - tokenizer.max_len,
-            truncation_strategy="longest_first",
-            stride=0,
-        ) """
-
-    sequence = tokenizer.build_inputs_with_special_tokens(ids)
-    token_type_ids = tokenizer.create_token_type_ids_from_sequences(ids)
-    # HARD-CODED: As I know, most of the transformers architecture will be `[CLS] + text + [SEP]``
-    #             Only way to safely cover all the cases is to integrate `token mask builder` in internal library.
-    tokens_mask = [1] + tokens_mask + [1]
-    words = [tokenizer.cls_token] + words + [tokenizer.sep_token]
-
-    encoded_inputs = {}
-    encoded_inputs["input_ids"] = sequence
-    encoded_inputs["token_type_ids"] = token_type_ids
-
-    if return_tensors == "tf" and is_tf_available():
-        encoded_inputs["input_ids"] = tf.constant([encoded_inputs["input_ids"]])
-
-        if "token_type_ids" in encoded_inputs:
-            encoded_inputs["token_type_ids"] = tf.constant([encoded_inputs["token_type_ids"]])
-
-        if "attention_mask" in encoded_inputs:
-            encoded_inputs["attention_mask"] = tf.constant([encoded_inputs["attention_mask"]])
-
-    elif return_tensors == "pt" and is_torch_available():
-        encoded_inputs["input_ids"] = torch.tensor([encoded_inputs["input_ids"]])
-
-        if "token_type_ids" in encoded_inputs:
-            encoded_inputs["token_type_ids"] = torch.tensor([encoded_inputs["token_type_ids"]])
-
-        if "attention_mask" in encoded_inputs:
-            encoded_inputs["attention_mask"] = torch.tensor([encoded_inputs["attention_mask"]])
-
-    return encoded_inputs, words, tokens_mask
-
-
-class NerPipeline(Pipeline):
-    default_input_names = "sequences"
-
-    def __init__(
-        self,
-        model: Union["PreTrainedModel", "TFPreTrainedModel"],
-        tokenizer: PreTrainedTokenizer,
-        modelcard: Optional[ModelCard] = None,
-        framework: Optional[str] = None,
-        args_parser: ArgumentHandler = None,
-        device: int = -1,
-        binary_output: bool = False,
-        ignore_labels=["O"],
-        task: str = "",
-        ignore_special_tokens: bool = True
-    ):
-        super().__init__(
-            model=model,
-            tokenizer=tokenizer,
-            modelcard=modelcard,
-            framework=framework,
-            args_parser=args_parser,
-            device=device,
-            binary_output=binary_output,
-            task=task,
-        )
-
-        self._basic_tokenizer = BasicTokenizer(do_lower_case=False)
-        self.ignore_labels = ignore_labels
-        self.ignore_special_tokens = ignore_special_tokens
-
-    def __call__(self, *texts, **kwargs):
-        inputs = [*texts]
-        answers = []
-        for sentence in inputs:
-
-            # Manage correct placement of the tensors
-            with self.device_placement():
-
-                # [FIX] Split token by word-level
-                tokens, words, tokens_mask = custom_encode_plus(
-                    sentence,
-                    self.tokenizer,
-                    return_tensors=self.framework
-                )
-
-                # Forward
-                if self.framework == "tf":
-                    entities = self.model(tokens)[0][0].numpy()
-                    input_ids = tokens["input_ids"].numpy()[0]
-                else:
-                    with torch.no_grad():
-                        tokens = self.ensure_tensor_on_device(**tokens)
-                        entities = self.model(**tokens)[0][0].cpu().numpy()
-                        input_ids = tokens["input_ids"].cpu().numpy()[0]
-
-            score = np.exp(entities) / np.exp(entities).sum(-1, keepdims=True)
-            labels_idx = score.argmax(axis=-1)
-
-            token_level_answer = []
-            for idx, label_idx in enumerate(labels_idx):
-                # NOTE Append every answer even though the `entity` is in `ignore_labels`
-                token_level_answer += [
-                    {
-                        "word": self.tokenizer.convert_ids_to_tokens(int(input_ids[idx])),
-                        "score": score[idx][label_idx].item(),
-                        "entity": self.model.config.id2label[label_idx],
-                    }
-                ]
-
-            # [FIX] Now let's change it to word-level NER
-            word_idx = 0
-            word_level_answer = []
-
-            # NOTE: Might not be safe. BERT, ELECTRA etc. won't make issues.
-            if self.ignore_special_tokens:
-                words = words[1:-1]
-                tokens_mask = tokens_mask[1:-1]
-                token_level_answer = token_level_answer[1:-1]
-
-            for mask, ans in zip(tokens_mask, token_level_answer):
-                if mask == 1:
-                    ans["word"] = words[word_idx]
-                    word_idx += 1
-                    if ans["entity"] not in self.ignore_labels:
-                        word_level_answer.append(ans)
-
-            # Append
-            answers += [word_level_answer]
-        if len(answers) == 1:
-            return answers[0]
-        return answers
-
-        
-    def _sanitize_parameters(self, **pipeline_parameters):
-        return None, None, None
-
-    def preprocess(self, **pipeline_parameters):
-        pass
-
-    def postprocess(self, **pipeline_parameters):
-        pass
-    
-    def _forward(self, **pipeline_parameters):
-        pass
-
 class KoelectraCRF(ElectraPreTrainedModel):
+    # Class with crf added to the last layer of the Koelectra model
     def __init__(self, config):
         super(KoelectraCRF, self).__init__(config)
 
@@ -1095,9 +927,8 @@ class KoelectraCRF(ElectraPreTrainedModel):
 
         return outputs
 
-
-
 class CRF(nn.Module):
+    # CRF model
     def __init__(self, num_tags: int, batch_first: bool = False) -> None:
         if num_tags <= 0:
             raise ValueError(f'invalid number of tags: {num_tags}')
