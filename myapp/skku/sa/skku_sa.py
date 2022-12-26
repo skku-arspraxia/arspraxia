@@ -37,9 +37,6 @@ class SKKU_SA:
     # class SKKU_SA 시작: args 불러오기, 변수 초기화
     def __init__(self):
         self.args = loadJSON()
-        self.trainFinished = False
-        self.currentStep = 1
-        self.currentEpoch = 0
 
     # train 속성 설정
     def setTrainAttr(self, params):
@@ -90,7 +87,6 @@ class SKKU_SA:
         
         #AutoModelForSequenceClassification 모듈을 통해 Sequence classification pretained 모델을 불러와 저장 
         self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
-        self.currentStep = 2    # currentStep = 2로 업데이트
 
         # Train Data Download
         tdfilePath = self.args.path_train_data
@@ -124,7 +120,6 @@ class SKKU_SA:
             self.dataset = self.dataset.replace(val[0], idx)
 
         self.train_data, self.test_data = train_test_split(self.dataset, test_size=self.args.test_size)
-        self.currentStep = 3    # Finished downloading data, currentStep = 3으로 업데이트
 
     # args의 epochs 수 만큼 for문을 돌며 모델 학습
     def train(self):
@@ -171,12 +166,9 @@ class SKKU_SA:
 
             losses.append(total_loss)
             accuracies.append(correct.float() / total)
-            self.currentEpoch += 1
-            print("Current Epoch : "+str(self.currentEpoch))
             print(i, "Train Loss:", total_loss, "Accuracy:", correct.float() / total)
                 
         self.sentiment_classifier = TextClassificationPipeline(tokenizer=self.tokenizer, model=self.model, function_to_apply=self.args.function_to_apply, device=0)
-        self.currentStep = 4    # Finished training
 
         # Save model to local storage
         # 학습을 마친 모델을 local storage에 저장한 후, 로컬의 모델을 AWS S3에 저장
@@ -218,7 +210,6 @@ class SKKU_SA:
 
         # 임시로 로컬에 저장한 모델 파일 제거
         shutil.rmtree(output_dir)
-        self.currentStep = 5    # Finished uploading model
 
         # 평가 함수 호출
         self.evaluate()
@@ -243,7 +234,6 @@ class SKKU_SA:
         self.precesion = precision_score(y_true, y_pred, average="micro")
         self.recall =recall_score(y_true, y_pred, average="micro")
         self.f1score = f1_score(y_true, y_pred, average="micro")
-        self.trainFinished = True
 
     # inference 속성 설정
     def setInferenceAttr(self, params):
@@ -373,20 +363,9 @@ class SKKU_SA:
         return self.recall
 
     
-    def getCurrentStep(self):
-        return self.currentStep
-
-    
-    def getCurrentEpoch(self):
-        return self.currentEpoch
-
-    
     def getResultFileName(self):
         return self.result_file_name
-
-
-    def isTrainFinished(self):
-        return self.trainFinished
+        
 
 # 감성 분석 데이터 input 형태 맞추기
 class SentimentReviewDataset(Dataset):  
